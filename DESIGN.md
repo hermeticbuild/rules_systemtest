@@ -21,11 +21,34 @@ Bazel can neither start, cache, nor reproduce. The common workaround — disable
 stand services up in CI before the test — makes pipelines slow and flaky.
 
 `rules_systemtest` closes the gap:
-
 - **Caching.** A test's cache key is derived from both the test code and the description of
   the services it needs. Unchanged tests don't re-run.
 - **Sharing.** A running fixture can be reused across many tests (subject to policy),
   amortizing startup cost. You choose the cost/parallelism trade-off per fixture.
+
+Reusing fixtures across tests makes it easier to break hermeticity (one test can leave
+state in the fixture that could affect subsequent tests) so the added risk and complexity
+must be balanced against potential time savings.
+
+`rules_systemtest` is particularly well suited for cases where test fixtures have to run
+in an external environment (either because they can't fit on a single machine or because
+the tests require running the service in a specific environment). In those cases fixture
+startup tends to be long and the automatic fixture lifecycle management performed by the
+coordinator allows for efficient management of shared resources.
+
+If your dependencies are local processes that don't take a lot of time to start consider
+[`rules_itest`](https://github.com/hermeticbuild/rules_itest) instead. It runs services as
+child processes of the test action. There is no daemon and every test gets a fresh private
+environment which gets cleaned up with the test action.
+
+| | `rules_itest` | `rules_systemtest` |
+|---|---|---|
+| Where fixtures run | child processes of the test action | wherever the plugin provisions them: local container, K8s cluster, etc.. |
+| Fixture lifetime | exactly one test action | independent of any test |
+| Startup cost | paid per test action | amortized across tests |
+| Sharing between tests | none; always hermetic | yes; per-fixture reuse policy |
+
+The two are not exclusive. A repository can use both rulesets as appropriate.
 
 ---
 
