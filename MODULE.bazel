@@ -27,11 +27,39 @@ module(
     # (breaking) change.
 )
 
+# ==========================================================================
+# The released ruleset: Starlark, the proto, and the toolchain types.
+#
+# Deliberately thin. The coordinator, api gateway, test runner, and fixturectl
+# are *precompiled* binaries fetched from the release, so a consumer of this
+# module never has to evaluate rules_go, gazelle, rules_rust, rules_rust_prost,
+# or crate_universe. Everything that needs a language ruleset lives in the
+# sibling `rules_systemtest_src` module (//src), which is published in lockstep
+# and is what you depend on to build the services from source.
+#
+# Adding a bazel_dep here is a decision about every consumer's module graph —
+# check whether it belongs in //src first.
+# ==========================================================================
+
+# string_flag / BuildSettingInfo (//:coordinator_mode), bzl_library.
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
-bazel_dep(name = "package_metadata", version = "0.0.6")
+
+# proto_library (//proto:systemtest_proto).
+bazel_dep(name = "protobuf", version = "35.1")
+
+# Constraint values for selecting the per-platform prebuilt binaries.
 bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "package_metadata", version = "0.0.6")
+bazel_dep(name = "bazelrc-preset.bzl", version = "1.6.0")
 
 bazel_dep(name = "gazelle", version = "0.50.0", dev_dependency = True, repo_name = "bazel_gazelle")
 bazel_dep(name = "bazel_skylib_gazelle_plugin", version = "1.8.2", dev_dependency = True)
 
-bazel_dep(name = "bazelrc-preset.bzl", version = "1.6.0")
+# tools/reformat.sh runs buildifier through Bazel so it needs no host install.
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.1", dev_dependency = True)
+
+# TODO: register the prebuilt binary toolchains here once there is a release to
+# fetch (//systemtest/private/prebuilt). Until then no default toolchain exists
+# and every consumer must depend on rules_systemtest_src;
+# //systemtest/private:systemtest.bzl fails with instructions rather than
+# Bazel's bare "no matching toolchains" error.

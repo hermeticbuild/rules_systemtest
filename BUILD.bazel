@@ -1,4 +1,4 @@
-load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
 load("@package_metadata//licenses/rules:license.bzl", "license")
 load("@package_metadata//purl:purl.bzl", "purl")
 load("@package_metadata//rules:package_metadata.bzl", "package_metadata")
@@ -23,9 +23,16 @@ alias(
     actual = "//tools:gazelle",
 )
 
-bzl_library(
-    name = "systemtest",
-    srcs = ["systemtest.bzl"],
+# The public API is //systemtest:defs.bzl; see //systemtest/BUILD.bazel for its
+# bzl_library.
+
+# //:coordinator_mode — only "local" is wired in the scaffold.
+string_flag(
+    name = "coordinator_mode",
+    build_setting_default = "local",
+    values = [
+        "local",
+        "remote",
+    ],
     visibility = ["//visibility:public"],
-    deps = ["//private:env"],
 )

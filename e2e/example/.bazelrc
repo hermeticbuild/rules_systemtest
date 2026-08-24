@@ -1,0 +1,6 @@
+# Prebuilt protoc instead of building protobuf's C++ from source. This module
+# builds the services from source (see MODULE.bazel), so it drives both codegen
+# paths (rules_go, rules_rust_prost) and pays for protobuf otherwise.
+common --@protobuf//bazel/toolchains:prefer_prebuilt_protoc
+
+test --test_output=all

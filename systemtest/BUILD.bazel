@@ -1,0 +1,20 @@
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["defs.bzl"])
+
+bzl_library(
+    name = "defs",
+    srcs = ["defs.bzl"],
+    deps = [
+        "//systemtest/private:builtin_fixtures",
+        "//systemtest/private:coordinator",
+        "//systemtest/private:env",
+        "//systemtest/private:fixture",
+        "//systemtest/private:macros",
+        "//systemtest/private:plugin",
+        "//systemtest/private:runner",
+        "//systemtest/private:systemtest",
+    ],
+)

@@ -20,8 +20,12 @@ jobs:
       matrix:
         bazel: ["8.x", "9.x"]
         folder:
+          # Every Bazel module in the repo. Each has its own MODULE.bazel and
+          # build graph; `bazel test //...` at the root does not descend into
+          # them (see .bazelignore).
           - .
-          - tests/e2e/smoke
+          - src
+          - e2e/example
     defaults:
       run:
         working-directory: ${{ matrix.folder }}
@@ -32,12 +36,37 @@ jobs:
       - uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86 # 0.19.0
         with:
           bazelisk-cache: true
+          # Without this, setup-bazel installs nothing.
+          bazelisk-version: 1.29.0
           disk-cache: ${{ github.workflow }}
           repository-cache: true
+          # The root .bazelrc sets --lockfile_mode=error, but MODULE.bazel.lock is
+          # written by whatever .bazelversion pins and its format is not portable
+          # across Bazel releases, so every row here overrides it.
           bazelrc: |
             ${{ matrix.folder == '.' && 'common --config=ci ' || '' }}
-            ${{ matrix.folder == '.' && !startsWith(matrix.bazel, '9.') && 'common --lockfile_mode=update' || '' }}
+            ${{ matrix.folder == '.' && 'common --lockfile_mode=update' || '' }}
       - run: bazel test //...
+  reformat:
+    # Asserts `tools/reformat.sh` is a no-op.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86 # 0.19.0
+        with:
+          bazelisk-cache: true
+          bazelisk-version: 1.29.0
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+      - run: tools/reformat.sh
+      - name: Assert reformat.sh produced no changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::tools/reformat.sh changed files. Run it locally and commit the result."
+            git status --porcelain
+            git diff
+            exit 1
+          fi
   pre-commit:
     runs-on: ubuntu-latest
     steps:
@@ -46,9 +75,8 @@ jobs:
   # For branch protection settings, this job provides a "stable" name that can be used to gate PR merges
   # on "all matrix jobs were successful".
   conclusion:
-    needs: [test, pre-commit]
+    needs: [test, reformat, pre-commit]
     runs-on: ubuntu-latest
-    if: always()
     steps:
       - uses: technote-space/workflow-conclusion-action@45ce8e0eb155657ab8ccf346ade734257fd196a5 # v3.0.3
       # Note: possible conclusion values:

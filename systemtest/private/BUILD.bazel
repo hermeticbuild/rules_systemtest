@@ -1,0 +1,60 @@
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "launcher.sh.tpl",
+])
+
+bzl_library(
+    name = "fixture",
+    srcs = ["fixture.bzl"],
+    deps = [":plugin"],
+)
+
+bzl_library(
+    name = "builtin_fixtures",
+    srcs = ["builtin_fixtures.bzl"],
+    deps = [":fixture"],
+)
+
+bzl_library(
+    name = "macros",
+    srcs = ["macros.bzl"],
+    deps = [":builtin_fixtures"],
+)
+
+bzl_library(
+    name = "systemtest",
+    srcs = ["systemtest.bzl"],
+    deps = [
+        ":config",
+        ":fixture",
+        "@bazel_skylib//rules:common_settings",
+    ],
+)
+
+bzl_library(
+    name = "config",
+    srcs = ["config.bzl"],
+)
+
+bzl_library(
+    name = "coordinator",
+    srcs = ["coordinator.bzl"],
+)
+
+bzl_library(
+    name = "env",
+    srcs = ["env.bzl"],
+)
+
+bzl_library(
+    name = "plugin",
+    srcs = ["plugin.bzl"],
+)
+
+bzl_library(
+    name = "runner",
+    srcs = ["runner.bzl"],
+)

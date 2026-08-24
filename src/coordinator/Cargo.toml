@@ -1,0 +1,24 @@
+[package]
+name = "coordinator"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+# The union of what the `coordinator` library and the `coordinator_local` binary
+# need — they are one Cargo package, so `all_crate_deps()` returns this list for
+# both Bazel targets. Slight over-declaration on each; harmless.
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+hyper-util.workspace = true
+prost.workspace = true
+sha2.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+tonic.workspace = true
+tower.workspace = true
+uuid.workspace = true
+
+# The generated proto crate. Bazel uses //proto:systemtest_rust_proto instead;
+# this path dep is what makes `cargo build` and rust-analyzer work.
+systemtest-proto = { path = "../proto/systemtestrs" }

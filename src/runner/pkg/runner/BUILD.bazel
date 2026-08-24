@@ -1,0 +1,29 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "runner",
+    srcs = [
+        "args.go",
+        "clientid.go",
+        "config.go",
+        "coordinator.go",
+        "env.go",
+        "exec.go",
+        "fixture.go",
+        "junit.go",
+        "lease.go",
+        "rlocation.go",
+        "run.go",
+    ],
+    importpath = "github.com/hermeticbuild/rules_systemtest/src/runner/pkg/runner",
+    visibility = ["//runner:__subpackages__"],
+    deps = [
+        "//proto:systemtest_go_proto",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_spf13_cobra//:cobra",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials/insecure",
+        "@org_golang_google_protobuf//encoding/protojson",
+        "@rules_go//go/runfiles",
+    ],
+)

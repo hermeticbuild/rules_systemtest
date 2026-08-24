@@ -1,0 +1,7 @@
+# The checked-in generated Go proto stubs (see //tools:write_generated_srcs) exist
+# only for `go` tooling. Bazel consumes //proto:systemtest_go_proto instead, so
+# keep gazelle from ever generating a conflicting go_library over them.
+# gazelle:exclude proto/systemtestpb
+
+# Referenced by crate.from_cargo(manifests = ...) in //:MODULE.bazel.
+exports_files(["Cargo.toml"])

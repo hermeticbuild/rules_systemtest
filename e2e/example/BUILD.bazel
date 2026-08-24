@@ -1,0 +1,28 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("@rules_systemtest//systemtest:defs.bzl", "dummy_fixture", "systemtest")
+
+# A fake Redis fixture. Nothing is provisioned; the stub plugin echoes these
+# ports back as a systemtest.ports output and the runner injects them.
+dummy_fixture(
+    name = "redis",
+    plugin = "@rules_systemtest_src//plugins/dummy",
+    ports = {"main": "6379"},
+    replicas = 1,
+)
+
+# The inner test: asserts the fixture's endpoint env vars were injected.
+# `manual` because it only passes when run *through* :redis_test — the
+# endpoint env it asserts on is injected by the systemtest runner — so it must
+# not be picked up by `bazel test //...`.
+sh_test(
+    name = "redis_smoke_test",
+    srcs = ["redis_smoke_test.sh"],
+    tags = ["manual"],
+)
+
+# The e2e entry point (run from this directory): bazel test //:redis_test
+systemtest(
+    name = "redis_test",
+    fixtures = [":redis"],
+    test = ":redis_smoke_test",
+)

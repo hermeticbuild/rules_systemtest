@@ -1,0 +1,9 @@
+package(default_visibility = ["//visibility:public"])
+
+# Toolchain types for `systemtest` rule.
+#
+# These will allow us to support precompiled binaries.
+
+toolchain_type(name = "runner_toolchain_type")
+
+toolchain_type(name = "coordinator_toolchain_type")

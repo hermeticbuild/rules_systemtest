@@ -1,0 +1,10 @@
+# No Bazel targets: Bazel builds the proto crate with `rust_prost_library` (see
+# ../BUILD.bazel), not from the checked-in src/lib.rs. Those sources exist for
+# `cargo` and rust-analyzer only — see Cargo.toml.
+#
+# The labels below are needed by //tools:write_generated_srcs (the copy-into-the
+# -source-tree target) and by crate.from_cargo(manifests = ...) in //:MODULE.bazel.
+exports_files([
+    "Cargo.toml",
+    "src/lib.rs",
+])

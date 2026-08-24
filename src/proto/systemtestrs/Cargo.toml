@@ -1,0 +1,17 @@
+# The prost/tonic-generated proto crate, checked in.
+#
+# Bazel does NOT build from these sources — this is just for the IDE.
+[package]
+name = "systemtest-proto"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[lib]
+name = "systemtest_proto"
+path = "src/lib.rs"
+
+[dependencies]
+async-trait.workspace = true
+prost.workspace = true
+tonic.workspace = true

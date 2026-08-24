@@ -1,7 +1,0 @@
-bazel_dep(name = "rules_systemtest", version = "0.0.0", dev_dependency = True)
-bazel_dep(name = "bazel_skylib", version = "1.9.0", dev_dependency = True)
-
-local_path_override(
-    module_name = "rules_systemtest",
-    path = "../../..",
-)

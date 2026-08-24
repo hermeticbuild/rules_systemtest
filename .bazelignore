@@ -1,2 +1,3 @@
-tests/e2e/
-examples/
+# Nested Bazel modules.
+src
+e2e

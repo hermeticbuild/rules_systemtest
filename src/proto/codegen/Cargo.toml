@@ -1,0 +1,10 @@
+[package]
+name = "proto-codegen"
+edition.workspace = true
+publish.workspace = true
+version.workspace = true
+
+[dependencies]
+prost-types.workspace = true
+protoc-gen-prost = "0.4"
+protoc-gen-tonic = "0.4"

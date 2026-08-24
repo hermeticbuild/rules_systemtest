@@ -1,0 +1,4 @@
+# No Bazel targets: this Cargo package exists only to declare the protoc plugin
+# binaries for crate_universe (see Cargo.toml). The manifest needs a label so
+# //:MODULE.bazel's crate.from_cargo can list it as an input.
+exports_files(["Cargo.toml"])

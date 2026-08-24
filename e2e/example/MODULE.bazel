@@ -1,0 +1,33 @@
+module(
+    name = "rules_systemtest_e2e_example",
+    version = "0.0.0",
+)
+
+# Consume the ruleset from the repo root — this example is a *separate* Bazel
+# module that depends on rules_systemtest the way a real user would.
+bazel_dep(name = "rules_systemtest", version = "0.0.0")
+local_path_override(
+    module_name = "rules_systemtest",
+    path = "../..",
+)
+
+# Build the coordinator, runner, and reference plugin from source rather than
+# using the ruleset's precompiled binaries. `register_toolchains` has to be here
+# in the *root* module: root-module registrations outrank a dependency's, which
+# is what makes these win over the prebuilt toolchains rules_systemtest
+# registers.
+bazel_dep(name = "rules_systemtest_src", version = "0.0.0")
+local_path_override(
+    module_name = "rules_systemtest_src",
+    path = "../../src",
+)
+
+register_toolchains("@rules_systemtest_src//toolchains:all")
+
+# Needed directly because this module's BUILD loads @rules_shell//shell:sh_test.bzl.
+bazel_dep(name = "rules_shell", version = "0.6.1")
+
+# Not loaded by any BUILD here; needed so `@protobuf//...` resolves in the
+# --@protobuf//bazel/toolchains:prefer_prebuilt_protoc flag in .bazelrc, which
+# a from-source consumer wants (it skips ~1100 CppCompile actions for protobuf).
+bazel_dep(name = "protobuf", version = "35.1")

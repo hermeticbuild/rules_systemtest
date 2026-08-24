@@ -1,37 +1,17 @@
 # How to Contribute
 
-## Using devcontainers
-
-If you are using [devcontainers](https://code.visualstudio.com/docs/devcontainers/containers)
-and/or [codespaces](https://github.com/features/codespaces) then you can start
-contributing immediately and skip the next step.
-
 ## Formatting
 
-Starlark files should be formatted by buildifier.
-We suggest using a pre-commit hook to automate this.
-First [install pre-commit](https://pre-commit.com/#installation),
-then run
-
-```shell
-pre-commit install
-pre-commit install --hook-type commit-msg
-```
-
-Otherwise later tooling on CI will yell at you about formatting/linting violations.
+Run './tools/format.sh' to make sure code is formatted.
 
 ## Commit messages
 
 Commits and pull request titles must follow
-[Conventional Commits](https://www.conventionalcommits.org/). CI enforces this on the PR title,
-and the `commitizen` pre-commit hook enforces it on commit messages locally. Release automation
-is not set up yet, but it will derive versions from this history, so it is worth getting right
-from the start.
+[Conventional Commits](https://www.conventionalcommits.org/). CI enforces this.
 
 ## Updating BUILD files
 
 Some targets are generated from sources.
-Currently this is just the `bzl_library` targets.
 Run `bazel run //:gazelle` to keep them up-to-date.
 
 ## Updating .bazelrc presets

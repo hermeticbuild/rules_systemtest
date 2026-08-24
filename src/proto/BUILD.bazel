@@ -1,0 +1,39 @@
+load("@rules_go//proto:def.bzl", "go_proto_library")
+load("@rules_rust_prost//:defs.bzl", "rust_prost_library")
+
+package(default_visibility = ["//visibility:public"])
+
+# The proto itself is in the parent ruleset while the Rust/Go codegen
+# is here.
+
+go_proto_library(
+    name = "systemtest_go_proto",
+    compilers = [
+        "@rules_go//proto:go_proto",
+        "@rules_go//proto:go_grpc_v2",
+    ],
+    importpath = "github.com/hermeticbuild/rules_systemtest/src/proto/systemtestpb",
+    proto = "@rules_systemtest//proto:systemtest_proto",
+)
+
+rust_prost_library(
+    name = "systemtest_rust_proto",
+    proto = "@rules_systemtest//proto:systemtest_proto",
+)
+
+filegroup(
+    name = "systemtest_go_proto_srcs",
+    srcs = [":systemtest_go_proto"],
+    output_group = "go_generated_srcs",
+)
+
+# write_source_files diffs against this directory, so it needs a label for it.
+exports_files(["systemtestpb"])
+
+# The prost/tonic-generated Rust, for //tools:write_generated_srcs to copy into
+# systemtestrs/src/lib.rs.
+filegroup(
+    name = "systemtest_rust_proto_srcs",
+    srcs = [":systemtest_rust_proto"],
+    output_group = "rust_generated_srcs",
+)

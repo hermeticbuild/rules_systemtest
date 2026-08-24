@@ -1,0 +1,25 @@
+load("@crates//:defs.bzl", "all_crate_deps", "crate_edition")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@rules_systemtest//systemtest:defs.bzl", "systemtest_plugin")
+
+# Third-party deps and the edition come from Cargo.toml; see //:Cargo.toml.
+rust_binary(
+    name = "plugin",
+    srcs = ["src/main.rs"],
+    edition = crate_edition(),
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(normal = True) + [
+        "//proto:systemtest_rust_proto",
+    ],
+)
+
+# The plugin serving the `dummy` fixture type.
+systemtest_plugin(
+    name = "dummy",
+    binary = ":plugin",
+    impl_ids = ["@rules_systemtest//fixtures:dummy"],
+    visibility = ["//visibility:public"],
+)
+
+# Referenced by crate.from_cargo(manifests = ...) in //:MODULE.bazel.
+exports_files(["Cargo.toml"])

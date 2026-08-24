@@ -2,3 +2,7 @@ bazel-*
 .bazelrc.user
 .idea/
 .ijwb/
+
+# Cargo's build output. Bazel is the build system; `cargo build` exists for the
+# editor/dev loop over src/ (see src/Cargo.toml).
+target/

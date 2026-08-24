@@ -1,0 +1,24 @@
+load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
+
+# The checked-in generated proto code, for `go` and `cargo`/rust-analyzer only.
+
+# Go: flatten out of the deep importpath-shaped prefix into a directory.
+copy_to_directory(
+    name = "systemtestpb_generated",
+    srcs = ["//proto:systemtest_go_proto_srcs"],
+    root_paths = ["**"],
+)
+
+write_source_files(
+    name = "write_generated_srcs",
+    # The Go destination is a directory, and both destinations are in other
+    # packages, so don't look for same-package output files.
+    check_that_out_file_exists = False,
+    files = {
+        "//proto:systemtestpb": ":systemtestpb_generated",
+        # Rust codegen is a single file; it is renamed on the way in
+        # (systemtest_proto.lib.rs -> src/lib.rs).
+        "//proto/systemtestrs:src/lib.rs": "//proto:systemtest_rust_proto_srcs",
+    },
+)

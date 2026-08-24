@@ -1,0 +1,189 @@
+syntax = "proto3";
+
+// TODO: split this into separate files.
+package systemtest.v1;
+
+option go_package = "github.com/hermeticbuild/rules_systemtest/src/proto/systemtestpb";
+
+// ---------------------------------------------------------------------------
+// Common data model
+// ---------------------------------------------------------------------------
+
+// A single value on the wire.
+message Value {
+  // JSON conforming to schema_id, tagged with the id of a schema the emitting
+  // plugin advertises.
+  message SchemaBlob {
+    string schema_id = 1;
+    bytes contents = 2;
+  }
+  oneof value {
+    string str = 1;          // scalar; also JSON-encoded lists/dicts on inputs
+    bytes data = 3;          // raw bytes (e.g. inlined file contents)
+    SchemaBlob schema_blob = 4;
+    int32 int_value = 5;     // integer scalar (protojson: a JSON number)
+  }
+}
+
+message Empty {}
+
+// Reuse/sharing policy for a fixture. See design "Reuse, sharing, and slots".
+message Sharing {
+  oneof use_scope {
+    Empty unrestricted = 1;       // any client_id may reuse
+    Empty client_restricted = 2;  // only the creating client_id (default)
+    Empty single_use = 3;         // never reused
+  }
+  int64 maximum_concurrent_connections = 4;  // "slots"
+}
+
+enum LeaseStatus {
+  LEASE_STATUS_UNKNOWN = 0;
+  PENDING = 1;
+  SUCCEEDED = 2;
+  FAILED = 3;
+}
+
+// The content-addressed recipe for a fixture.
+message FixtureDescription {
+  string impl_id = 1;
+  oneof plugin {
+    string binary_path = 2;    // local mode: runfiles path the coordinator starts
+    string container_ref = 3;  // remote mode: digest-pinned (unused in scaffold)
+  }
+  map<string, Value> inputs = 4;
+  repeated string image_inputs = 5;  // scaffold: unused
+  repeated string file_inputs = 6;   // scaffold: unused
+  Sharing sharing = 7;
+  int64 startup_timeout_seconds = 8;
+  string name = 9;  // human-readable; not part of identity
+}
+
+// ---------------------------------------------------------------------------
+// Runner <-> Coordinator
+// ---------------------------------------------------------------------------
+
+service CoordinatorService {
+  rpc TakeLease(TakeLeaseRequest) returns (TakeLeaseResponse);
+  rpc Keepalive(KeepaliveRequest) returns (KeepaliveResponse);
+  rpc ReleaseLease(ReleaseRequest) returns (ReleaseResponse);
+  rpc Status(StatusRequest) returns (StatusResponse);
+}
+
+message TakeLeaseRequest {
+  FixtureDescription fixture = 1;  // fully resolved
+  string client_id = 2;            // reuse key
+  string owner = 3;                // accounting only
+  int64 ttl_seconds = 4;
+  uint32 associated_tests_count = 5;
+}
+
+message TakeLeaseResponse {
+  LeaseStatus status = 1;
+  string lease_id = 2;
+  map<string, Value> outputs = 3;  // only on SUCCEEDED; forwarded verbatim
+  repeated string messages = 4;
+}
+
+message KeepaliveRequest { string lease_id = 1; }
+message KeepaliveResponse {}
+message ReleaseRequest { string lease_id = 1; }
+message ReleaseResponse {}
+message StatusRequest { string lease_id = 1; }
+message StatusResponse {
+  LeaseStatus status = 1;
+  map<string, Value> outputs = 2;
+  repeated string messages = 3;
+}
+
+// ---------------------------------------------------------------------------
+// Coordinator <-> Plugin
+// ---------------------------------------------------------------------------
+
+service CoordinatorPlugin {
+  rpc DescribePlugin(Empty) returns (DescribeResponses);
+  rpc GetResourcePool(CreateRequest) returns (ResourcePool);
+  rpc GetResourceRequests(CreateRequest) returns (ResourceRequests);
+  rpc CreateFixture(CreateRequest) returns (stream CreateProgress);
+  rpc DestroyFixture(DestroyRequest) returns (DestroyResponse);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message DescribeResponses { repeated DescribeResponse responses = 1; }
+message DescribeResponse {
+  string impl_id = 1;
+  string version = 2;
+  map<string, string> schemas = 3;  // schema_id -> JSON Schema text
+}
+
+message CreationMetadata {
+  string fixture_id = 1;  // stable id; key idempotency on this
+  string client_id = 2;
+  string owner = 3;
+  map<string, string> labels = 4;
+}
+
+message CreateRequest {
+  string impl_id = 1;
+  map<string, Value> inputs = 2;  // file contents already inlined
+  CreationMetadata metadata = 3;
+}
+
+message ResourceAmount {
+  string name = 1;
+  string unit = 2;
+  int64 quantity = 3;
+}
+message ResourcePool {
+  string pool_id = 1;
+  repeated ResourceAmount resources = 2;
+}
+message ResourceRequests { repeated ResourcePool consumes = 1; }
+
+enum CreateProgressStatus {
+  CREATE_PROGRESS_UNKNOWN = 0;
+  CREATE_PROGRESS_ENQUEUED = 1;
+  CREATE_PROGRESS_CREATING = 2;
+  CREATE_PROGRESS_RUNNING = 3;
+  CREATE_PROGRESS_SUCCEEDED = 4;  // terminal success; result is set
+  CREATE_PROGRESS_ERROR = 5;      // terminal failure
+}
+
+enum FixtureElementStatus {
+  FIXTURE_ELEMENT_UNKNOWN = 0;
+  FIXTURE_ELEMENT_CREATING = 1;
+  FIXTURE_ELEMENT_RUNNING = 2;
+  FIXTURE_ELEMENT_ERROR = 3;
+}
+message FixtureElementStatusInfo {
+  string element_name = 1;
+  FixtureElementStatus status = 2;
+  repeated string messages = 3;
+}
+
+message CreateProgress {
+  CreateProgressStatus status = 1;
+  repeated FixtureElementStatusInfo element_infos = 2;
+  optional FixtureResult result = 3;  // set once, on CREATE_PROGRESS_SUCCEEDED
+}
+
+message FixtureResult {
+  map<string, Value> outputs = 1;
+  int64 idle_timeout_seconds = 2;
+  bytes instance_data = 3;  // opaque; handed back to Destroy/HealthCheck
+  repeated ResourcePool consumed = 4;
+}
+
+message DestroyRequest {
+  string impl_id = 1;
+  bytes instance_data = 2;
+}
+message DestroyResponse {}
+message HealthCheckRequest {
+  string impl_id = 1;
+  bytes instance_data = 2;
+}
+message HealthCheckResponse {
+  bool healthy = 1;
+  string message = 2;
+}

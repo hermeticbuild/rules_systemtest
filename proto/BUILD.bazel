@@ -1,0 +1,17 @@
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+# The wire contract, and only the language-agnostic `proto_library` over it.
+#
+# Go and Rust codegen lives in //src/proto instead: `go_proto_library` and
+# `rust_prost_library` would drag rules_go and rules_rust_prost into every
+# consumer's module graph. Keeping the `proto_library` here means a plugin
+# author in any language can generate their own stubs from this target with
+# only their own language ruleset.
+proto_library(
+    name = "systemtest_proto",
+    srcs = ["systemtest.proto"],
+)
+
+exports_files(["systemtest.proto"])

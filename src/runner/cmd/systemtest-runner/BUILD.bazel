@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "systemtest-runner_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/hermeticbuild/rules_systemtest/src/runner/cmd/systemtest-runner",
+    visibility = ["//visibility:private"],
+    deps = ["//runner/pkg/runner"],
+)
+
+go_binary(
+    name = "systemtest-runner",
+    embed = [":systemtest-runner_lib"],
+    visibility = ["//visibility:public"],
+)

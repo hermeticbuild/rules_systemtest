@@ -1,0 +1,81 @@
+load("@rules_rust//rust:defs.bzl", "rust_library_group")
+load("@rules_rust_prost//:defs.bzl", "rust_prost_toolchain")
+load(
+    "@rules_systemtest//systemtest:defs.bzl",
+    "systemtest_coordinator",
+    "systemtest_coordinator_toolchain",
+    "systemtest_runner",
+    "systemtest_runner_toolchain",
+)
+
+package(default_visibility = ["//visibility:public"])
+
+systemtest_runner(
+    name = "runner",
+    binary = "//runner/cmd/systemtest-runner:systemtest-runner",
+)
+
+systemtest_runner_toolchain(
+    name = "runner_impl",
+    runner = ":runner",
+)
+
+toolchain(
+    name = "runner_toolchain",
+    toolchain = ":runner_impl",
+    toolchain_type = "@rules_systemtest//systemtest/toolchains:runner_toolchain_type",
+)
+
+systemtest_coordinator(
+    name = "coordinator",
+    binary = "//coordinator:coordinator_local",
+)
+
+systemtest_coordinator_toolchain(
+    name = "coordinator_impl",
+    coordinator = ":coordinator",
+)
+
+toolchain(
+    name = "coordinator_toolchain",
+    toolchain = ":coordinator_impl",
+    toolchain_type = "@rules_systemtest//systemtest/toolchains:coordinator_toolchain_type",
+)
+
+# --------------------------------------------------------------------------
+# Prost/tonic codegen toolchain for //proto:systemtest_rust_proto.
+#
+# @rules_rust_prost's default toolchain links its own vendored tonic/prost,
+# which rustc treats as different crates from the @crates ones the coordinator
+# and plugin use ("multiple different versions of crate `tonic`"). Defining the
+# toolchain here over @crates keeps exactly one of each in the graph.
+# --------------------------------------------------------------------------
+rust_library_group(
+    name = "prost_runtime",
+    deps = ["@crates//:prost"],
+)
+
+rust_library_group(
+    name = "tonic_runtime",
+    deps = [
+        ":prost_runtime",
+        "@crates//:tonic",
+    ],
+)
+
+rust_prost_toolchain(
+    name = "prost_toolchain_impl",
+    # `btree_map=.` makes proto map iteration order stable.
+    prost_opts = ["btree_map=."],
+    prost_plugin = "@crates//:protoc-gen-prost__protoc-gen-prost",
+    prost_runtime = ":prost_runtime",
+    prost_types = "@crates//:prost-types",
+    tonic_plugin = "@crates//:protoc-gen-tonic__protoc-gen-tonic",
+    tonic_runtime = ":tonic_runtime",
+)
+
+toolchain(
+    name = "prost_toolchain",
+    toolchain = ":prost_toolchain_impl",
+    toolchain_type = "@rules_rust_prost//:toolchain_type",
+)

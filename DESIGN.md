@@ -111,7 +111,7 @@ target in `BUILD` files.
 
 ```python
 # in fixtures.bzl
-load("@systemtest//bazel:defs.bzl", "systemtest_fixture_rule")
+load("@rules_systemtest//systemtest:defs.bzl", "systemtest_fixture_rule")
 
 docker_run = systemtest_fixture_rule(
     impl_id = "@systemtest//fixtures:docker_run",
@@ -209,23 +209,72 @@ At least one of `binary` (used in local mode) or `container_ref` (remote mode, m
 digest-pinned) is required. `impl_ids` lists the fixture kinds it implements; the fixture
 rule checks its `impl_id` is in this list.
 
-## The runner toolchain (`systemtest_runner`)
+## The runner and coordinator toolchains
+
+The runner and the coordinator are both resolved through toolchain types
+(`@rules_systemtest//systemtest/toolchains:runner_toolchain_type`,
+`:coordinator_toolchain_type`) rather than being hardcoded labels. That is what lets the
+ruleset ship precompiled binaries by default while still allowing them to be replaced —
+either by a user's own build, or by the from-source module (see *Distribution*).
+
+Separate types per role on purpose: replacing the runner is common, replacing the
+coordinator is rare, and one bundled type would force anyone doing either to re-specify
+the other.
 
 The runner is a normal binary composed of hooks (see *The test runner*). Users can supply
 their own so they can add hooks that understand their plugins' custom output schemas.
 
 ```python
-go_binary(name = "my_runner", srcs = ["main.go"], deps = ["@systemtest//runner", ...hooks...])
+go_binary(
+    name = "my_runner",
+    srcs = ["main.go"],
+    deps = ["@rules_systemtest_src//runner/pkg/runner", ...hooks...],
+)
 systemtest_runner(name = "my_systemtest_runner", binary = ":my_runner")
 systemtest_runner_toolchain(name = "my_runner_toolchain", runner = ":my_systemtest_runner")
-# register_toolchains("//tools:my_runner_toolchain")
+# in MODULE.bazel: register_toolchains("//tools:my_runner_toolchain")
 ```
 
-The `systemtest` rule resolves the runner via a toolchain type; a registered custom runner
-transparently replaces the built-in default. **Using non-standard plugins means shipping a
-custom runner whose hooks understand those plugins' output schemas** — the coupling between
-a plugin's output schemas and the runner's hooks is a compile-time concern; there is no
-runtime schema-negotiation.
+A registered custom runner transparently replaces the built-in default: `register_toolchains`
+in the root module outranks any registration a dependency makes. **Using non-standard plugins
+means shipping a custom runner whose hooks understand those plugins' output schemas** — the
+coupling between a plugin's output schemas and the runner's hooks is a compile-time concern;
+there is no runtime schema-negotiation.
+
+## Distribution
+
+Two Bazel modules, released in lockstep (one BCR pull request publishes both):
+
+- **`rules_systemtest`** — the Starlark rules, the proto and its `proto_library`, the
+  toolchain types, and the coordinator / api gateway / test runner / `fixturectl` as
+  *precompiled* per-platform binaries. Its only direct dependencies are `bazel_skylib`,
+  `protobuf`, and `platforms`.
+- **`rules_systemtest_src`** — the source for those binaries, and therefore `rules_go`,
+  `gazelle`, `rules_rust`, `rules_rust_prost`, and `crate_universe`.
+
+The split is the reason the `proto_library` lives in the ruleset while
+`go_proto_library` / `rust_prost_library` live in the source module: a consumer of the
+released ruleset must never *use* a language ruleset, but a plugin author in any language
+still needs the `proto_library` to generate their own stubs. (`proto_library` requires its
+`srcs` in the same package, so exporting only the raw `.proto` would not work — plugin
+authors could not declare their own.)
+
+What the split buys is the elimination of extension evaluation and toolchain registration:
+no `go_deps` resolution against the consumer's Go module graph, no `crate_universe` repin,
+no Rust or Go toolchain download. It does not empty the module *graph* — `protobuf`
+transitively names `rules_go`, `gazelle`, and `rules_rust` — but nothing loads from them,
+so their repos are never fetched.
+
+Building from source is opt-in, in the consumer's own MODULE.bazel:
+
+```python
+bazel_dep(name = "rules_systemtest_src", version = "<rules_systemtest version>")
+register_toolchains("@rules_systemtest_src//toolchains:all")
+```
+
+Locally the coordinator and the api gateway run as one process; remotely they are two
+services. Both are composed from the same libraries, so the difference is which binary
+is built, not conditional compilation.
 
 ## High-level macros
 
@@ -411,6 +460,10 @@ func main() {
         Run(context.Background(), runner.ParseArgs(os.Args)))
 }
 ```
+
+The hook framework is an ordinary Go library — `github.com/…/rules_systemtest/src/runner/pkg/runner`
+— so a custom runner is built with the user's own `rules_go`. The ruleset ships the default
+runner precompiled and does not require `rules_go` of anyone who uses it as-is.
 
 ---
 
