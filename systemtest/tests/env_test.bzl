@@ -20,7 +20,7 @@ def _sanitizes_impl(ctx):
 
 def _prefixes_leading_digit_impl(ctx):
     env = unittest.begin(ctx)
-    asserts.equals(env, "_2ND_DB", env_prefix_for_fixture("2nd-db"))
+    asserts.equals(env, "_2_DB", env_prefix_for_fixture("2-db"))
     return unittest.end(env)
 
 # The unittest library requires that we export the test cases as named test rules,

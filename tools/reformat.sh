@@ -16,10 +16,15 @@ if ! command -v bazel >/dev/null 2>&1; then
     exit 1
 fi
 
+# MODULE.bazel.lock refresh. `bazel mod deps` would be the obvious command, but
+# we can't due to https://github.com/protocolbuffers/protobuf/issues/28224
+echo "==> (main) bzlmod lockfile update"
+bazel build --nobuild --lockfile_mode=update //...
+
 cd "${SRC}"
 
-echo "==> bzlmod lockfile update"
-bazel mod deps --lockfile_mode=update
+echo "==> (src) bzlmod lockfile update"
+bazel build --nobuild --lockfile_mode=update //...
 
 echo "==> (src) bazel run //tools:write_generated_srcs"
 bazel run //tools:write_generated_srcs
