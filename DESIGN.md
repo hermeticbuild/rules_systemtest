@@ -7,7 +7,7 @@ test.
 
 It provides three things:
 
-- **A Bazel rule layer** for declaring *fixtures* (the external services a test depends on)
+- **A Bazel rule layer** for declaring _fixtures_ (the external services a test depends on)
   and wiring them to tests.
 - **A coordinator** — a long-running service that owns fixture lifecycle, reuse, leases, and
   resource quota.
@@ -21,6 +21,7 @@ Bazel can neither start, cache, nor reproduce. The common workaround — disable
 stand services up in CI before the test — makes pipelines slow and flaky.
 
 `rules_systemtest` closes the gap:
+
 - **Caching.** A test's cache key is derived from both the test code and the description of
   the services it needs. Unchanged tests don't re-run.
 - **Sharing.** A running fixture can be reused across many tests (subject to policy),
@@ -41,12 +42,12 @@ If your dependencies are local processes that don't take a lot of time to start 
 child processes of the test action. There is no daemon and every test gets a fresh private
 environment which gets cleaned up with the test action.
 
-| | `rules_itest` | `rules_systemtest` |
-|---|---|---|
-| Where fixtures run | child processes of the test action | wherever the plugin provisions them: local container, K8s cluster, etc.. |
-| Fixture lifetime | exactly one test action | independent of any test |
-| Startup cost | paid per test action | amortized across tests |
-| Sharing between tests | none; always hermetic | yes; per-fixture reuse policy |
+|                       | `rules_itest`                      | `rules_systemtest`                                                       |
+| --------------------- | ---------------------------------- | ------------------------------------------------------------------------ |
+| Where fixtures run    | child processes of the test action | wherever the plugin provisions them: local container, K8s cluster, etc.. |
+| Fixture lifetime      | exactly one test action            | independent of any test                                                  |
+| Startup cost          | paid per test action               | amortized across tests                                                   |
+| Sharing between tests | none; always hermetic              | yes; per-fixture reuse policy                                            |
 
 The two are not exclusive. A repository can use both rulesets as appropriate.
 
@@ -104,7 +105,7 @@ runner's hooks (which consume them) understand output schemas.
 
 ## Fixture types and the fixture rule factory
 
-A *fixture type* is defined once with a load-time factory that returns a Bazel `rule`. In
+A _fixture type_ is defined once with a load-time factory that returns a Bazel `rule`. In
 Bazel a rule can only be created while a `.bzl` file loads, so the factory is called at the
 top level of a `.bzl` and bound to a global; the resulting rule is then instantiated as a
 target in `BUILD` files.
@@ -138,12 +139,12 @@ docker_run(
 
 **Input kinds** (`inputs` values):
 
-| Kind | Meaning | On the wire |
-|---|---|---|
-| `string`, `int`, `bool` | scalar literal | `Value.str` |
-| `string_list`, `string_dict` | structured literal | `Value.str` holding JSON |
-| `file` | an artifact whose **contents** the runner inlines before contacting the coordinator | `Value.str` = runfiles path; key listed in `file_inputs` |
-| `image` | a locally-built OCI image the `imageupload` hook pushes to a registry and replaces with an @sha256 ref | `Value.str` |
+| Kind                         | Meaning                                                                                                | On the wire                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| `string`, `int`, `bool`      | scalar literal                                                                                         | `Value.str`                                              |
+| `string_list`, `string_dict` | structured literal                                                                                     | `Value.str` holding JSON                                 |
+| `file`                       | an artifact whose **contents** the runner inlines before contacting the coordinator                    | `Value.str` = runfiles path; key listed in `file_inputs` |
+| `image`                      | a locally-built OCI image the `imageupload` hook pushes to a registry and replaces with an @sha256 ref | `Value.str`                                              |
 
 There is no notion of one fixture depending on another fixture's output; a fixture is a
 single plugin call. (Composing fixtures out of smaller reusable steps is intentionally out of
@@ -153,7 +154,7 @@ Every generated fixture rule has these attributes in addition to its declared in
 
 - `plugin` (label, required) — the `systemtest_plugin` that implements this `impl_id`.
 - `sharing` (string dict) — `{"scope": "unrestricted"|"client_restricted"|"single_use",
-  "max_connections": "<N>"}`. Defaults to `client_restricted`, `max_connections=1`.
+"max_connections": "<N>"}`. Defaults to `client_restricted`, `max_connections=1`.
 - `startup_timeout_s` (int) — how long the runner/coordinator waits for the fixture to become
   healthy.
 
@@ -186,7 +187,7 @@ not sandbox away network access) and a generous default timeout (fixture startup
 against the test's wall clock).
 
 `fixtures` may list several fixtures; the runner takes **one lease per fixture** and the test
-process sees all fixtures' endpoints (see *Environment injection*).
+process sees all fixtures' endpoints (see _Environment injection_).
 
 ## Plugins (`systemtest_plugin`)
 
@@ -215,13 +216,13 @@ The runner and the coordinator are both resolved through toolchain types
 (`@rules_systemtest//systemtest/toolchains:runner_toolchain_type`,
 `:coordinator_toolchain_type`) rather than being hardcoded labels. That is what lets the
 ruleset ship precompiled binaries by default while still allowing them to be replaced —
-either by a user's own build, or by the from-source module (see *Distribution*).
+either by a user's own build, or by the from-source module (see _Distribution_).
 
 Separate types per role on purpose: replacing the runner is common, replacing the
 coordinator is rare, and one bundled type would force anyone doing either to re-specify
 the other.
 
-The runner is a normal binary composed of hooks (see *The test runner*). Users can supply
+The runner is a normal binary composed of hooks (see _The test runner_). Users can supply
 their own so they can add hooks that understand their plugins' custom output schemas.
 
 ```python
@@ -247,21 +248,21 @@ Two Bazel modules, released in lockstep (one BCR pull request publishes both):
 
 - **`rules_systemtest`** — the Starlark rules, the proto and its `proto_library`, the
   toolchain types, and the coordinator / api gateway / test runner / `fixturectl` as
-  *precompiled* per-platform binaries. Its only direct dependencies are `bazel_skylib`,
+  _precompiled_ per-platform binaries. Its only direct dependencies are `bazel_skylib`,
   `protobuf`, and `platforms`.
 - **`rules_systemtest_src`** — the source for those binaries, and therefore `rules_go`,
   `gazelle`, `rules_rust`, `rules_rust_prost`, and `crate_universe`.
 
 The split is the reason the `proto_library` lives in the ruleset while
 `go_proto_library` / `rust_prost_library` live in the source module: a consumer of the
-released ruleset must never *use* a language ruleset, but a plugin author in any language
+released ruleset must never _use_ a language ruleset, but a plugin author in any language
 still needs the `proto_library` to generate their own stubs. (`proto_library` requires its
 `srcs` in the same package, so exporting only the raw `.proto` would not work — plugin
 authors could not declare their own.)
 
 What the split buys is the elimination of extension evaluation and toolchain registration:
 no `go_deps` resolution against the consumer's Go module graph, no `crate_universe` repin,
-no Rust or Go toolchain download. It does not empty the module *graph* — `protobuf`
+no Rust or Go toolchain download. It does not empty the module _graph_ — `protobuf`
 transitively names `rules_go`, `gazelle`, and `rules_rust` — but nothing loads from them,
 so their repos are never fetched.
 
@@ -309,7 +310,7 @@ These flow to the runner via the launcher script.
 - **Ephemeral (locally-built) images** are pushed by the runner and the input is rewritten to
   the resulting digest before the description reaches the coordinator; the image artifact is
   in the test action's runfiles, so rebuilding it re-runs the test.
-- **File inputs are carried by content**, not path (see *File-content inlining*), and the
+- **File inputs are carried by content**, not path (see _File-content inlining_), and the
   files are in the test action's runfiles.
 - **The plugin's own bytes are part of fixture identity** (the coordinator hashes the plugin
   binary / uses the digest-pinned container ref). A plugin change therefore both re-runs the
@@ -439,12 +440,12 @@ substitutes the locally-bound host/port for tunneled ports.
 
 ## Stock hooks
 
-| Hook | Type | Fires when | Does |
-|---|---|---|---|
-| `imageupload` | Pre | any `image_inputs` present | pushes each local image to the configured registry by digest (HEAD then PUT if absent), rewrites the input to the resolved digest ref |
-| `portforward` | Around | an output has schema `systemtest.ports` with a tunneled entry | binds a local port per tunneled entry (via `kubectl port-forward`), injects host/port env; cleanup tears the forwards down |
-| `k8slogs` | Post | an output has schema `systemtest.k8s_log_fetch` | materializes a temp kubeconfig from the descriptor's contents, `kubectl logs` per pod (bounded, partial-OK), writes to the test's undeclared-outputs dir |
-| `locallogs` | Post | an output has schema `systemtest.local_log_fetch` | reads the listed local files and writes them to the undeclared-outputs dir |
+| Hook          | Type   | Fires when                                                    | Does                                                                                                                                                     |
+| ------------- | ------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `imageupload` | Pre    | any `image_inputs` present                                    | pushes each local image to the configured registry by digest (HEAD then PUT if absent), rewrites the input to the resolved digest ref                    |
+| `portforward` | Around | an output has schema `systemtest.ports` with a tunneled entry | binds a local port per tunneled entry (via `kubectl port-forward`), injects host/port env; cleanup tears the forwards down                               |
+| `k8slogs`     | Post   | an output has schema `systemtest.k8s_log_fetch`               | materializes a temp kubeconfig from the descriptor's contents, `kubectl logs` per pod (bounded, partial-OK), writes to the test's undeclared-outputs dir |
+| `locallogs`   | Post   | an output has schema `systemtest.local_log_fetch`             | reads the listed local files and writes them to the undeclared-outputs dir                                                                               |
 
 ## Building a custom runner
 
@@ -578,14 +579,14 @@ fingerprint ⇒ a fresh fixture.
 ## The allocator
 
 All quota and fixture-store mutations run on a **single logical driver** so bookkeeping stays
-consistent. This does *not* serialize provisioning — the actual `CreateFixture` calls run
+consistent. This does _not_ serialize provisioning — the actual `CreateFixture` calls run
 concurrently.
 
 ```
 on TakeLease(desc, client_id):
     fp = fingerprint(desc)                       # coordinator-computed (above)
     lock:
-        if f := find_reusable(fp, client_id): 
+        if f := find_reusable(fp, client_id):
             f.used_slots += 1
             return SUCCEEDED(lease→f, f.outputs)
         pool = plugin.GetResourcePool(desc)      # register idempotently (first-wins, below)
@@ -624,7 +625,7 @@ message ResourcePool   { string pool_id = 1; repeated ResourceAmount resources =
 
 - A pool holds several resource kinds at once (e.g. cpu + memory + pods).
 - `pool_id` is derived by the plugin from the description (e.g. a cluster host, or `"local"`)
-  so concurrent fixtures over the *same* infrastructure name the *same* pool.
+  so concurrent fixtures over the _same_ infrastructure name the _same_ pool.
 - The coordinator **registers pools idempotently by `pool_id`, first-wins**: the first
   measurement of a pool's capacity is authoritative; a later, conflicting measurement is
   ignored with a warning (this avoids double-counting and needs no operator config, at the
@@ -648,7 +649,7 @@ record is persisted. To recover: the coordinator passes a stable `fixture_id` (a
 it as the created resource's name/label). A retried create then re-attaches to the existing
 resource instead of creating a second one.
 
-The stored fixture record must also carry enough to *re-reach* the plugin later for
+The stored fixture record must also carry enough to _re-reach_ the plugin later for
 `DestroyFixture`/`HealthCheck` (the plugin reference / content hash), not just the plugin's
 opaque `instance_data`.
 
@@ -823,21 +824,34 @@ The project ships a small vocabulary that the built-in hooks understand.
 
 - **`systemtest.ports`** — connectable endpoints. Consumed by `portforward` + env injection.
   ```json
-  { "ports": [
-      { "name": "main", "protocol": "tcp",
-        "tunnel": false, "host": "10.0.0.5", "port": 6379 },
-      { "name": "admin", "protocol": "tcp",
-        "tunnel": true, "namespace": "ns-abc", "target": "svc/redis", "remote_port": 6380 }
-  ] }
+  {
+    "ports": [
+      {
+        "name": "main",
+        "protocol": "tcp",
+        "tunnel": false,
+        "host": "10.0.0.5",
+        "port": 6379
+      },
+      {
+        "name": "admin",
+        "protocol": "tcp",
+        "tunnel": true,
+        "namespace": "ns-abc",
+        "target": "svc/redis",
+        "remote_port": 6380
+      }
+    ]
+  }
   ```
   A `tunnel: false` entry is directly reachable at `host:port`. A `tunnel: true` entry must be
-  reached via `kubectl port-forward` (see *Networking*); it names the cluster target and
+  reached via `kubectl port-forward` (see _Networking_); it names the cluster target and
   remote port, and pairs with a `systemtest.kubeconfig` output for cluster access.
 - **`systemtest.kubeconfig`** — `{ "contents": "<kubeconfig>" }`. Cluster access for tunneling
   and/or for tests that talk to the cluster directly. Carried as contents; hooks materialize a
   temp file.
 - **`systemtest.k8s_log_fetch`** — `{ "kubeconfig": "<contents, log-read-only>",
-  "namespace": "…" }`. Consumed by `k8slogs`.
+"namespace": "…" }`. Consumed by `k8slogs`.
 - **`systemtest.local_log_fetch`** — `{ "paths": ["/var/log/…"] }`. Consumed by `locallogs`.
 
 ---

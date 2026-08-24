@@ -3,18 +3,6 @@ load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library")
 
 package(default_visibility = ["//visibility:public"])
 
-# Third-party deps and the edition come from Cargo.toml — see //:Cargo.toml for
-# why the Cargo workspace exists. `all_crate_deps()` returns this package's
-# manifest deps, so `tokio` and friends are named once, in Cargo.toml, and
-# `cargo add` is how you add one. First-party deps are still listed here.
-#
-# The library and the binary are one Cargo package, so both get the union of the
-# manifest's dependencies. Harmless over-declaration; the alternative is two
-# manifests.
-
-# Coordinator logic (service impl, plugin client, fingerprinting) as a
-# library so it's unit-testable independently of the `coordinator_local`
-# binary's CLI/main wiring.
 rust_library(
     name = "coordinator",
     srcs = [
