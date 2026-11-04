@@ -82,12 +82,21 @@ impl CoordinatorPlugin for StubPlugin {
             })
             .unwrap_or_else(|| "{}".to_string());
 
+        // An optional `config` file input arrives inlined as Value.data (raw
+        // bytes). It is JSON {name: port} merged over `ports` — this exercises
+        // the file-input path end to end.
+        let config = req.inputs.get("config").and_then(|v| match &v.value {
+            Some(ValueKind::Data(bytes)) => Some(bytes.clone()),
+            _ => None,
+        });
+        let ports = merged_ports(&ports_input, config.as_deref());
+
         // This plugin provisions nothing real, so its entire state is the
         // requested port mapping. Stash it in `instance_data` so GetFixtureInfo
         // can reproduce the same outputs statelessly.
         Ok(Response::new(CreateResponse {
-            instance_data: ports_input.clone().into_bytes(),
-            outputs: ports_outputs(&ports_input),
+            instance_data: ports.clone().into_bytes(),
+            outputs: ports_outputs(&ports),
             consumed: vec![],
             idle_timeout_seconds: 60,
             max_lifetime_seconds: 0,
@@ -132,6 +141,20 @@ impl CoordinatorPlugin for StubPlugin {
     ) -> Result<Response<Empty>, Status> {
         Err(Status::unimplemented("dummy plugin issues no credentials"))
     }
+}
+
+/// Merges an optional `config` JSON object ({name: port}) over the `ports`
+/// input, returning a canonical JSON object string.
+fn merged_ports(ports_input: &str, config: Option<&[u8]>) -> String {
+    let mut map: Map<String, JsonValue> = serde_json::from_str(ports_input).unwrap_or_default();
+    if let Some(bytes) = config {
+        if let Ok(extra) = serde_json::from_slice::<Map<String, JsonValue>>(bytes) {
+            for (k, v) in extra {
+                map.insert(k, v);
+            }
+        }
+    }
+    serde_json::to_string(&map).unwrap_or_else(|_| "{}".to_string())
 }
 
 /// Builds the `systemtest.ports` outputs map, one entry per key in

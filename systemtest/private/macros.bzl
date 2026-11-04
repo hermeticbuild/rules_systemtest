@@ -2,7 +2,7 @@
 
 load(":builtin_fixtures.bzl", "dummy")
 
-def dummy_fixture(name, plugin, ports = None, replicas = None, sharing = None, **kwargs):
+def dummy_fixture(name, plugin, ports = None, replicas = None, sharing = None, config = None, **kwargs):
     """A fixture that provisions nothing. Scaffold demo of the full plumbing.
 
     Args:
@@ -15,6 +15,8 @@ def dummy_fixture(name, plugin, ports = None, replicas = None, sharing = None, *
       ports: {logical_name: "port"} to echo back as endpoints, e.g. {"main": "6379"}.
       replicas: an integer input (unused; demonstrates the int input path).
       sharing: {"scope": ..., "max_connections": "N"}.
+      config: optional JSON file of extra {name: port} entries, merged into
+              ports. Demonstrates a `file` input (contents inlined by the runner).
       **kwargs: forwarded (e.g. startup_timeout_s, visibility, tags).
     """
     dummy(
@@ -23,5 +25,6 @@ def dummy_fixture(name, plugin, ports = None, replicas = None, sharing = None, *
         replicas = replicas or 0,
         plugin = plugin,
         sharing = sharing or {},
+        config = config,
         **kwargs
     )
