@@ -10,6 +10,7 @@ go_library(
         "env.go",
         "exec.go",
         "fixture.go",
+        "hooks.go",
         "junit.go",
         "lease.go",
         "rlocation.go",

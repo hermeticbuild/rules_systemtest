@@ -6,21 +6,26 @@ import (
 	"os/exec"
 )
 
-// runTestBinary execs the resolved inner test binary, forwarding stdio, and
-// returns its exit code. env is layered as os.Environ() + injectedEnv +
-// configEnv (later layers win on key collisions), per CONTRACT.md step 8.
-func runTestBinary(binaryPath string, args []string, injectedEnv, configEnv map[string]string) (int, error) {
+// buildTestCmd constructs the inner test command with stdio forwarded and a
+// base env of os.Environ() + configEnv (configEnv wins on collision). Around
+// hooks further decorate the returned command (e.g. the portenv hook appends
+// fixture endpoint vars).
+func buildTestCmd(binaryPath string, args []string, configEnv map[string]string) *exec.Cmd {
 	cmd := exec.Command(binaryPath, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
-	cmd.Env = mergeEnv(os.Environ(), injectedEnv, configEnv)
+	cmd.Env = mergeEnv(os.Environ(), configEnv)
+	return cmd
+}
 
+// runCmd runs the (fully decorated) test command and returns its exit code.
+func runCmd(cmd *exec.Cmd) (int, error) {
 	if err := cmd.Run(); err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			return exitErr.ExitCode(), nil
 		}
-		return -1, fmt.Errorf("running test binary %s: %w", binaryPath, err)
+		return -1, fmt.Errorf("running test binary %s: %w", cmd.Path, err)
 	}
 	return 0, nil
 }

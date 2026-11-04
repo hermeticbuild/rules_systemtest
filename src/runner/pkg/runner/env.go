@@ -3,6 +3,7 @@ package runner
 import (
 	"encoding/json"
 	"fmt"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -66,4 +67,30 @@ func portEnvFromOutputs(fixtureName string, outputs map[string]*systemtestpb.Val
 		}
 	}
 	return env, nil
+}
+
+// portEnvHook is the stock Around hook that injects a fixture's endpoint env
+// (from its systemtest.ports output) into the test command. It is the single
+// code path for env injection; it fires only on leases whose outputs carry
+// the systemtest.ports schema (non-tunnel entries).
+type portEnvHook struct{}
+
+func (portEnvHook) Name() string { return "portenv" }
+
+func (portEnvHook) Setup(_ HookCtx, lease *Lease) (Wrapping, error) {
+	env, err := portEnvFromOutputs(lease.FixtureName, lease.Outputs)
+	if err != nil {
+		return Wrapping{}, err
+	}
+	if len(env) == 0 {
+		return Wrapping{}, nil
+	}
+	return Wrapping{
+		Wrap: func(cmd *exec.Cmd) *exec.Cmd {
+			for k, v := range env {
+				cmd.Env = append(cmd.Env, k+"="+v)
+			}
+			return cmd
+		},
+	}, nil
 }
