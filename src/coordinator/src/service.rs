@@ -10,10 +10,12 @@ use std::time::{Duration, SystemTime};
 
 use tonic::{Request, Response, Status};
 
+use crate::credentials::CredentialStore;
 use crate::model::fixture::FixtureFingerprint;
 use crate::model::lease::{
     LeaseFixtureStatus, LeaseId, LeaseState, UseScope, lease_status_from_instance_statuses,
 };
+use crate::plugin::FixtureFactory;
 use crate::store::{Mutation, Store};
 use systemtest_proto::systemtest::v1 as pb;
 use systemtest_proto::systemtest::v1::coordinator_service_server::CoordinatorService;
@@ -24,11 +26,21 @@ const KEEPALIVE_GRACE: Duration = Duration::from_secs(60);
 
 pub struct Service {
     store: Arc<dyn Store>,
+    factory: Arc<dyn FixtureFactory>,
+    credentials: Arc<CredentialStore>,
 }
 
 impl Service {
-    pub fn new(store: Arc<dyn Store>) -> Self {
-        Service { store }
+    pub fn new(
+        store: Arc<dyn Store>,
+        factory: Arc<dyn FixtureFactory>,
+        credentials: Arc<CredentialStore>,
+    ) -> Self {
+        Service {
+            store,
+            factory,
+            credentials,
+        }
     }
 }
 
@@ -132,11 +144,17 @@ impl CoordinatorService for Service {
             ),
         };
 
+        let credentials = if status == pb::LeaseStatus::Succeeded {
+            self.credentials.credentials(&id)
+        } else {
+            BTreeMap::new()
+        };
+
         Ok(Response::new(pb::StatusResponse {
             status: status as i32,
             outputs,
             messages,
-            credentials: BTreeMap::new(),
+            credentials,
         }))
     }
 
@@ -169,6 +187,16 @@ impl CoordinatorService for Service {
         request: Request<pb::ReleaseRequest>,
     ) -> Result<Response<pb::ReleaseResponse>, Status> {
         let id = parse_lease_id(request.into_inner().lease_id)?;
+        // Early-return any per-consumer slices (best-effort; issuance validity
+        // is the backstop).
+        if let Some(issued) = self.credentials.take(&id) {
+            for h in issued.handles {
+                let _ = self
+                    .factory
+                    .release_access_credentials(&h.impl_id, &h.instance_data, &h.handle)
+                    .await;
+            }
+        }
         self.store
             .apply(&[Mutation::DeleteLease(id)])
             .await

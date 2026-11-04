@@ -1,4 +1,5 @@
 pub mod allocator;
+pub mod credentials;
 pub mod model;
 pub mod plugin;
 pub mod plugin_client;

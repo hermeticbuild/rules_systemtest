@@ -8,7 +8,7 @@ use systemtest_proto::systemtest::v1 as pb;
 
 use crate::model::budget::Capacity;
 use crate::plugin::process::PluginProcessManager;
-use crate::plugin::{CreateMetadata, CreateOutput, FixtureFactory, FixtureInfo};
+use crate::plugin::{CreateMetadata, CreateOutput, FixtureFactory, FixtureInfo, IssuedCredentials};
 use crate::plugin_client;
 
 pub struct GrpcPluginFactory {
@@ -128,5 +128,52 @@ impl FixtureFactory for GrpcPluginFactory {
             })
             .await?;
         Ok(())
+    }
+
+    async fn issue_access_credentials(
+        &self,
+        impl_id: &str,
+        instance_data: &[u8],
+        validity: Duration,
+    ) -> Result<IssuedCredentials> {
+        let mut client = self.manager.existing_client(impl_id).await?;
+        let req = pb::IssueAccessCredentialsRequest {
+            impl_id: impl_id.to_string(),
+            instance_data: instance_data.to_vec(),
+            validity_seconds: validity.as_secs() as i64,
+        };
+        match client.issue_access_credentials(req).await {
+            Ok(resp) => {
+                let resp = resp.into_inner();
+                Ok(IssuedCredentials {
+                    credentials: resp.credentials,
+                    handle: resp.issued_handle,
+                })
+            }
+            // The plugin issues no credentials: treat as empty (invariant 4).
+            Err(status) if status.code() == tonic::Code::Unimplemented => {
+                Ok(IssuedCredentials::default())
+            }
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    async fn release_access_credentials(
+        &self,
+        impl_id: &str,
+        instance_data: &[u8],
+        handle: &[u8],
+    ) -> Result<()> {
+        let mut client = self.manager.existing_client(impl_id).await?;
+        let req = pb::ReleaseAccessCredentialsRequest {
+            impl_id: impl_id.to_string(),
+            instance_data: instance_data.to_vec(),
+            issued_handle: handle.to_vec(),
+        };
+        match client.release_access_credentials(req).await {
+            Ok(_) => Ok(()),
+            Err(status) if status.code() == tonic::Code::Unimplemented => Ok(()),
+            Err(e) => Err(e.into()),
+        }
     }
 }
