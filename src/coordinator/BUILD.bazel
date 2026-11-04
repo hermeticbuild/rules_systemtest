@@ -1,21 +1,25 @@
 load("@crates//:defs.bzl", "all_crate_deps", "crate_edition")
-load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
 
 package(default_visibility = ["//visibility:public"])
 
 rust_library(
     name = "coordinator",
-    srcs = [
-        "src/coordinator.rs",
-        "src/fixture.rs",
-        "src/lease.rs",
-        "src/lib.rs",
-        "src/plugin_client.rs",
-    ],
+    srcs = glob(
+        ["src/**/*.rs"],
+        exclude = ["src/bin/**"],
+    ),
     edition = crate_edition(),
+    proc_macro_deps = all_crate_deps(proc_macro = True),
     deps = all_crate_deps(normal = True) + [
         "//proto:systemtest_rust_proto",
     ],
+)
+
+rust_test(
+    name = "coordinator_test",
+    crate = ":coordinator",
+    edition = crate_edition(),
 )
 
 rust_binary(

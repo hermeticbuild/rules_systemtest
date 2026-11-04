@@ -1,5 +1,5 @@
 {
-  "checksum": "3a4d8c52e653e34201901ff2b2c4f8542294ca20b2689bd14a03a0403c359df0",
+  "checksum": "267638a8bafaf59076ecd8634911d0dfe0ff7e4403652ecb25131ab07e74a4b8",
   "crates": {
     "aho-corasick 1.1.5": {
       "name": "aho-corasick",
@@ -1466,12 +1466,28 @@
               "target": "clap"
             },
             {
+              "id": "futures 0.3.34",
+              "target": "futures"
+            },
+            {
               "id": "hyper-util 0.1.20",
               "target": "hyper_util"
             },
             {
+              "id": "itertools 0.14.0",
+              "target": "itertools"
+            },
+            {
               "id": "prost 0.13.5",
               "target": "prost"
+            },
+            {
+              "id": "serde 1.0.229",
+              "target": "serde"
+            },
+            {
+              "id": "serde_json 1.0.151",
+              "target": "serde_json"
             },
             {
               "id": "sha2 0.10.9",
@@ -1494,6 +1510,10 @@
               "target": "tower"
             },
             {
+              "id": "tracing 0.1.44",
+              "target": "tracing"
+            },
+            {
               "id": "uuid 1.24.1",
               "target": "uuid"
             }
@@ -1501,6 +1521,15 @@
           "selects": {}
         },
         "edition": "2024",
+        "proc_macro_deps": {
+          "common": [
+            {
+              "id": "async-trait 0.1.92",
+              "target": "async_trait"
+            }
+          ],
+          "selects": {}
+        },
         "version": "0.0.0"
       },
       "license": null,
@@ -1772,29 +1801,11 @@
           "**"
         ],
         "crate_features": {
-          "common": [],
-          "selects": {
-            "aarch64-apple-darwin": [
-              "std",
-              "use_std"
-            ],
-            "aarch64-unknown-linux-gnu": [
-              "std",
-              "use_std"
-            ],
-            "x86_64-pc-windows-msvc": [
-              "std",
-              "use_std"
-            ],
-            "x86_64-unknown-linux-gnu": [
-              "std",
-              "use_std"
-            ],
-            "x86_64-unknown-nixos-gnu": [
-              "std",
-              "use_std"
-            ]
-          }
+          "common": [
+            "std",
+            "use_std"
+          ],
+          "selects": {}
         },
         "edition": "2021",
         "version": "1.17.0"
@@ -2064,6 +2075,89 @@
       ],
       "license_file": "LICENSE-APACHE"
     },
+    "futures 0.3.34": {
+      "name": "futures",
+      "version": "0.3.34",
+      "package_url": "https://github.com/rust-lang/futures-rs",
+      "repository": {
+        "Http": {
+          "url": "https://static.crates.io/crates/futures/0.3.34/download",
+          "sha256": "9a31d2a3fbaaeb2af2368bbdd904aa8e812d3c04a1ee10d3171f52d556e5d0a3"
+        }
+      },
+      "targets": [
+        {
+          "Library": {
+            "crate_name": "futures",
+            "crate_root": "src/lib.rs",
+            "srcs": {
+              "allow_empty": true,
+              "include": [
+                "**/*.rs"
+              ]
+            }
+          }
+        }
+      ],
+      "library_target_name": "futures",
+      "common_attrs": {
+        "compile_data_glob": [
+          "**"
+        ],
+        "crate_features": {
+          "common": [
+            "alloc",
+            "async-await",
+            "default",
+            "executor",
+            "futures-executor",
+            "std"
+          ],
+          "selects": {}
+        },
+        "deps": {
+          "common": [
+            {
+              "id": "futures-channel 0.3.34",
+              "target": "futures_channel"
+            },
+            {
+              "id": "futures-core 0.3.34",
+              "target": "futures_core"
+            },
+            {
+              "id": "futures-executor 0.3.34",
+              "target": "futures_executor"
+            },
+            {
+              "id": "futures-io 0.3.34",
+              "target": "futures_io"
+            },
+            {
+              "id": "futures-sink 0.3.34",
+              "target": "futures_sink"
+            },
+            {
+              "id": "futures-task 0.3.34",
+              "target": "futures_task"
+            },
+            {
+              "id": "futures-util 0.3.34",
+              "target": "futures_util"
+            }
+          ],
+          "selects": {}
+        },
+        "edition": "2018",
+        "version": "0.3.34"
+      },
+      "license": "MIT OR Apache-2.0",
+      "license_ids": [
+        "Apache-2.0",
+        "MIT"
+      ],
+      "license_file": "LICENSE-APACHE"
+    },
     "futures-channel 0.3.34": {
       "name": "futures-channel",
       "version": "0.3.34",
@@ -2097,6 +2191,8 @@
           "common": [
             "alloc",
             "default",
+            "futures-sink",
+            "sink",
             "std"
           ],
           "selects": {}
@@ -2106,6 +2202,10 @@
             {
               "id": "futures-core 0.3.34",
               "target": "futures_core"
+            },
+            {
+              "id": "futures-sink 0.3.34",
+              "target": "futures_sink"
             }
           ],
           "selects": {}
@@ -2154,6 +2254,169 @@
             "alloc",
             "default",
             "std"
+          ],
+          "selects": {}
+        },
+        "edition": "2018",
+        "version": "0.3.34"
+      },
+      "license": "MIT OR Apache-2.0",
+      "license_ids": [
+        "Apache-2.0",
+        "MIT"
+      ],
+      "license_file": "LICENSE-APACHE"
+    },
+    "futures-executor 0.3.34": {
+      "name": "futures-executor",
+      "version": "0.3.34",
+      "package_url": "https://github.com/rust-lang/futures-rs",
+      "repository": {
+        "Http": {
+          "url": "https://static.crates.io/crates/futures-executor/0.3.34/download",
+          "sha256": "031b47cf1a3c6cc8bc2fc76cd437f521619387907d469316e7c0bc278f1f5432"
+        }
+      },
+      "targets": [
+        {
+          "Library": {
+            "crate_name": "futures_executor",
+            "crate_root": "src/lib.rs",
+            "srcs": {
+              "allow_empty": true,
+              "include": [
+                "**/*.rs"
+              ]
+            }
+          }
+        }
+      ],
+      "library_target_name": "futures_executor",
+      "common_attrs": {
+        "compile_data_glob": [
+          "**"
+        ],
+        "crate_features": {
+          "common": [
+            "std"
+          ],
+          "selects": {}
+        },
+        "deps": {
+          "common": [
+            {
+              "id": "futures-core 0.3.34",
+              "target": "futures_core"
+            },
+            {
+              "id": "futures-task 0.3.34",
+              "target": "futures_task"
+            },
+            {
+              "id": "futures-util 0.3.34",
+              "target": "futures_util"
+            }
+          ],
+          "selects": {}
+        },
+        "edition": "2018",
+        "version": "0.3.34"
+      },
+      "license": "MIT OR Apache-2.0",
+      "license_ids": [
+        "Apache-2.0",
+        "MIT"
+      ],
+      "license_file": "LICENSE-APACHE"
+    },
+    "futures-io 0.3.34": {
+      "name": "futures-io",
+      "version": "0.3.34",
+      "package_url": "https://github.com/rust-lang/futures-rs",
+      "repository": {
+        "Http": {
+          "url": "https://static.crates.io/crates/futures-io/0.3.34/download",
+          "sha256": "53c0fa8157de1303bfffdaa1cc2a673bfffb60102f76b0ef4441659124373fed"
+        }
+      },
+      "targets": [
+        {
+          "Library": {
+            "crate_name": "futures_io",
+            "crate_root": "src/lib.rs",
+            "srcs": {
+              "allow_empty": true,
+              "include": [
+                "**/*.rs"
+              ]
+            }
+          }
+        }
+      ],
+      "library_target_name": "futures_io",
+      "common_attrs": {
+        "compile_data_glob": [
+          "**"
+        ],
+        "crate_features": {
+          "common": [
+            "std"
+          ],
+          "selects": {}
+        },
+        "edition": "2018",
+        "version": "0.3.34"
+      },
+      "license": "MIT OR Apache-2.0",
+      "license_ids": [
+        "Apache-2.0",
+        "MIT"
+      ],
+      "license_file": "LICENSE-APACHE"
+    },
+    "futures-macro 0.3.34": {
+      "name": "futures-macro",
+      "version": "0.3.34",
+      "package_url": "https://github.com/rust-lang/futures-rs",
+      "repository": {
+        "Http": {
+          "url": "https://static.crates.io/crates/futures-macro/0.3.34/download",
+          "sha256": "9fb9654ba8355388abeb8dcb4fc62f511300867002afc858860463bdd9fe0c44"
+        }
+      },
+      "targets": [
+        {
+          "ProcMacro": {
+            "crate_name": "futures_macro",
+            "crate_root": "src/lib.rs",
+            "srcs": {
+              "allow_empty": true,
+              "include": [
+                "**/*.rs"
+              ]
+            }
+          }
+        }
+      ],
+      "library_target_name": "futures_macro",
+      "common_attrs": {
+        "compile_data_glob": [
+          "**"
+        ],
+        "deps": {
+          "common": [
+            {
+              "id": "proc-macro2 1.0.107",
+              "target": "proc_macro2"
+            },
+            {
+              "id": "quote 1.0.47",
+              "target": "quote"
+            },
+            {
+              "id": "syn 3.0.3",
+              "target": "syn"
+            }
           ],
           "selects": {}
         },
@@ -2245,7 +2508,8 @@
         ],
         "crate_features": {
           "common": [
-            "alloc"
+            "alloc",
+            "std"
           ],
           "selects": {}
         },
@@ -2291,19 +2555,46 @@
         "crate_features": {
           "common": [
             "alloc",
-            "slab"
+            "async-await",
+            "async-await-macro",
+            "channel",
+            "futures-channel",
+            "futures-io",
+            "futures-macro",
+            "futures-sink",
+            "io",
+            "memchr",
+            "sink",
+            "slab",
+            "std"
           ],
           "selects": {}
         },
         "deps": {
           "common": [
             {
+              "id": "futures-channel 0.3.34",
+              "target": "futures_channel"
+            },
+            {
               "id": "futures-core 0.3.34",
               "target": "futures_core"
             },
             {
+              "id": "futures-io 0.3.34",
+              "target": "futures_io"
+            },
+            {
+              "id": "futures-sink 0.3.34",
+              "target": "futures_sink"
+            },
+            {
               "id": "futures-task 0.3.34",
               "target": "futures_task"
+            },
+            {
+              "id": "memchr 2.8.3",
+              "target": "memchr"
             },
             {
               "id": "pin-project-lite 0.2.17",
@@ -2317,6 +2608,15 @@
           "selects": {}
         },
         "edition": "2018",
+        "proc_macro_deps": {
+          "common": [
+            {
+              "id": "futures-macro 0.3.34",
+              "target": "futures_macro"
+            }
+          ],
+          "selects": {}
+        },
         "version": "0.3.34"
       },
       "license": "MIT OR Apache-2.0",
@@ -3618,30 +3918,11 @@
         ],
         "crate_features": {
           "common": [
-            "use_alloc"
+            "default",
+            "use_alloc",
+            "use_std"
           ],
-          "selects": {
-            "aarch64-apple-darwin": [
-              "default",
-              "use_std"
-            ],
-            "aarch64-unknown-linux-gnu": [
-              "default",
-              "use_std"
-            ],
-            "x86_64-pc-windows-msvc": [
-              "default",
-              "use_std"
-            ],
-            "x86_64-unknown-linux-gnu": [
-              "default",
-              "use_std"
-            ],
-            "x86_64-unknown-nixos-gnu": [
-              "default",
-              "use_std"
-            ]
-          }
+          "selects": {}
         },
         "deps": {
           "common": [
@@ -6261,6 +6542,8 @@
         "crate_features": {
           "common": [
             "default",
+            "derive",
+            "serde_derive",
             "std"
           ],
           "selects": {}
@@ -6281,6 +6564,15 @@
           "selects": {}
         },
         "edition": "2021",
+        "proc_macro_deps": {
+          "common": [
+            {
+              "id": "serde_derive 1.0.229",
+              "target": "serde_derive"
+            }
+          ],
+          "selects": {}
+        },
         "version": "1.0.229"
       },
       "build_script_attrs": {
@@ -6416,6 +6708,12 @@
         "compile_data_glob": [
           "**"
         ],
+        "crate_features": {
+          "common": [
+            "default"
+          ],
+          "selects": {}
+        },
         "deps": {
           "common": [
             {
@@ -10167,17 +10465,21 @@
     "anyhow 1.0.104",
     "async-trait 0.1.92",
     "clap 4.6.6",
+    "futures 0.3.34",
     "hyper-util 0.1.20",
+    "itertools 0.14.0",
     "prost 0.13.5",
     "prost-types 0.13.5",
     "protoc-gen-prost 0.4.0",
     "protoc-gen-tonic 0.4.1",
+    "serde 1.0.229",
     "serde_json 1.0.151",
     "sha2 0.10.9",
     "tokio 1.53.1",
     "tokio-stream 0.1.19",
     "tonic 0.12.3",
     "tower 0.5.3",
+    "tracing 0.1.44",
     "uuid 1.24.1"
   ],
   "direct_dev_deps": [],
