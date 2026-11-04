@@ -12,6 +12,9 @@ use systemtest_proto::systemtest::v1 as pb;
 use crate::model::budget::Capacity;
 use crate::model::fixture::FixtureId;
 
+pub mod grpc;
+pub mod process;
+
 #[cfg(test)]
 pub(crate) mod testing;
 
