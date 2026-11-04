@@ -61,9 +61,11 @@ impl PluginProcessManager {
     }
 
     fn socket_path(&self, impl_id: &str) -> PathBuf {
+        // Keep the name short: Unix socket paths must fit in SUN_LEN (~104 on
+        // macOS) and the instance dir is already long under $TMPDIR.
         let hash: String = Sha256::digest(impl_id.as_bytes())
             .iter()
-            .take(8)
+            .take(4)
             .map(|b| format!("{b:02x}"))
             .collect();
         self.instance_dir
