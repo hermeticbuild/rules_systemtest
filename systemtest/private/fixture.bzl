@@ -68,17 +68,34 @@ def _make_fixture_impl(ctx):
     inputs_spec = json.decode(ctx.attr._inputs_spec)
 
     inputs = {}
+    file_inputs = []
+    input_files = []
     for name, kind in inputs_spec.items():
-        if kind in ("file", "image"):
-            # TODO(design: File-content inlining / Image upload): scaffold has no
-            # file/image inputs; the runner would inline contents / push images.
+        if kind == "image":
+            # TODO(ephemeral registry): image inputs are uploaded, not inlined.
             continue
-        inputs[name] = _value_json(kind, getattr(ctx.attr, name))
+        if kind == "file":
+            f = getattr(ctx.file, name)
+            if f == None:
+                continue  # optional file input, left unset
+            inputs[name] = {"str": _rlocation(ctx, f)}
+            file_inputs.append(name)
+            input_files.append(f)
+        elif kind == "file_list":
+            files = getattr(ctx.files, name)
+            if not files:
+                continue
+            inputs[name] = {"str": json.encode([_rlocation(ctx, f) for f in files])}
+            file_inputs.append(name)
+            input_files.extend(files)
+        else:
+            inputs[name] = _value_json(kind, getattr(ctx.attr, name))
 
     description = {
         "implId": impl_id,
         "binaryPath": _rlocation(ctx, plugin.binary) if plugin.binary else "",
         "inputs": inputs,
+        "fileInputs": file_inputs,
         "sharing": _sharing_json(ctx.attr.sharing),
         "name": ctx.label.name,
         "startupTimeoutSeconds": str(ctx.attr.startup_timeout_s),
@@ -87,7 +104,7 @@ def _make_fixture_impl(ctx):
     out = ctx.actions.declare_file(ctx.label.name + ".fixture.json")
     ctx.actions.write(out, json.encode_indent(description, indent = "  "))
 
-    runfiles = ctx.runfiles(files = [out]).merge(plugin.runfiles)
+    runfiles = ctx.runfiles(files = [out] + input_files).merge(plugin.runfiles)
     return [
         DefaultInfo(files = depset([out]), runfiles = runfiles),
         SystemtestFixtureInfo(
@@ -123,7 +140,11 @@ def systemtest_fixture_rule(impl_id, inputs = {}):
     }
 
     for name, kind in inputs.items():
-        if kind in ("file", "image"):
+        if kind == "file":
+            rule_attrs[name] = attr.label(allow_single_file = True)
+        elif kind == "file_list":
+            rule_attrs[name] = attr.label_list(allow_files = True)
+        elif kind == "image":
             rule_attrs[name] = attr.label(allow_single_file = True)
         elif kind in _SCALAR_KINDS:
             rule_attrs[name] = _SCALAR_KINDS[kind]()

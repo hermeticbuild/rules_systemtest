@@ -2,9 +2,12 @@ load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("@rules_systemtest//systemtest:defs.bzl", "dummy_fixture", "systemtest")
 
 # A fake Redis fixture. Nothing is provisioned; the stub plugin echoes these
-# ports back as a systemtest.ports output and the runner injects them.
+# ports back as a systemtest.ports output and the runner injects them. The
+# `config` file input (inlined by the runner) adds an "extra" port, proving the
+# file-input path end to end.
 dummy_fixture(
     name = "redis",
+    config = "redis_extra.json",
     plugin = "@rules_systemtest_src//plugins/dummy",
     ports = {"main": "6379"},
     replicas = 1,
