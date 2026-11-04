@@ -44,6 +44,17 @@ enum LeaseStatus {
   FAILED = 3;
 }
 
+// Lifecycle status of a provisioned fixture instance, as reported by the
+// plugin's GetFixtureInfo. Drives the coordinator's reconciler.
+enum InstanceStatus {
+  INSTANCE_STATUS_UNKNOWN = 0;
+  INSTANCE_STARTING = 1;       // created, not yet ready
+  INSTANCE_RUNNING = 2;        // ready and healthy
+  INSTANCE_SHUTTING_DOWN = 3;  // being torn down
+  INSTANCE_ERROR = 4;          // terminal failure
+  INSTANCE_DEFUNCT = 5;        // gone / unknown to the plugin
+}
+
 // The content-addressed recipe for a fixture.
 message FixtureDescription {
   string impl_id = 1;
@@ -57,6 +68,7 @@ message FixtureDescription {
   Sharing sharing = 7;
   int64 startup_timeout_seconds = 8;
   string name = 9;  // human-readable; not part of identity
+  string profile_id = 10;  // tenancy/budget profile; "" means "default". In the fingerprint.
 }
 
 // ---------------------------------------------------------------------------
@@ -72,7 +84,7 @@ service CoordinatorService {
 
 message TakeLeaseRequest {
   FixtureDescription fixture = 1;  // fully resolved
-  string client_id = 2;            // reuse key
+  string client_id = 2;            // reuse key (advisory)
   string owner = 3;                // accounting only
   int64 ttl_seconds = 4;
   uint32 associated_tests_count = 5;
@@ -81,8 +93,9 @@ message TakeLeaseRequest {
 message TakeLeaseResponse {
   LeaseStatus status = 1;
   string lease_id = 2;
-  map<string, Value> outputs = 3;  // only on SUCCEEDED; forwarded verbatim
+  map<string, Value> outputs = 3;      // only on SUCCEEDED; forwarded verbatim
   repeated string messages = 4;
+  map<string, Value> credentials = 5;  // per-consumer access material; never persisted (currently empty)
 }
 
 message KeepaliveRequest { string lease_id = 1; }
@@ -94,6 +107,7 @@ message StatusResponse {
   LeaseStatus status = 1;
   map<string, Value> outputs = 2;
   repeated string messages = 3;
+  map<string, Value> credentials = 4;  // see TakeLeaseResponse.credentials (currently empty)
 }
 
 // ---------------------------------------------------------------------------
@@ -104,9 +118,21 @@ service CoordinatorPlugin {
   rpc DescribePlugin(Empty) returns (DescribeResponses);
   rpc GetResourcePool(CreateRequest) returns (ResourcePool);
   rpc GetResourceRequests(CreateRequest) returns (ResourceRequests);
-  rpc CreateFixture(CreateRequest) returns (stream CreateProgress);
+  // Unary: returns as soon as creation is *initiated*. The coordinator's
+  // reconciler drives readiness via GetFixtureInfo. May return a typed
+  // RESOURCE_EXHAUSTED (gRPC code) carrying the exhausted pool_id in its
+  // details when the infrastructure is authoritative over quota.
+  rpc CreateFixture(CreateRequest) returns (CreateResponse);
+  // Polled every tick: re-derives a fixture's status/outputs on demand.
+  // Subsumes the old CreateProgress stream and HealthCheck.
+  rpc GetFixtureInfo(GetFixtureInfoRequest) returns (GetFixtureInfoResponse);
   rpc DestroyFixture(DestroyRequest) returns (DestroyResponse);
-  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+  // Optional: per-consumer access material. Default impl may return
+  // UNIMPLEMENTED, which the coordinator tolerates.
+  rpc IssueAccessCredentials(IssueAccessCredentialsRequest) returns (IssueAccessCredentialsResponse);
+  // Optional: early return of a finite per-consumer slice. UNIMPLEMENTED
+  // tolerated; issuance validity is the backstop.
+  rpc ReleaseAccessCredentials(ReleaseAccessCredentialsRequest) returns (Empty);
 }
 
 message DescribeResponses { repeated DescribeResponse responses = 1; }
@@ -121,12 +147,36 @@ message CreationMetadata {
   string client_id = 2;
   string owner = 3;
   map<string, string> labels = 4;
+  uint32 attempt = 6;     // retry attempt (0-based)
 }
 
 message CreateRequest {
   string impl_id = 1;
   map<string, Value> inputs = 2;  // file contents already inlined
   CreationMetadata metadata = 3;
+  bytes profile_config = 4;       // opaque operator blob, forwarded verbatim
+}
+
+message CreateResponse {
+  bytes instance_data = 1;            // opaque; handed back to GetFixtureInfo/Destroy
+  map<string, Value> outputs = 2;     // any immediately-known outputs
+  repeated ResourcePool consumed = 3;
+  int64 idle_timeout_seconds = 4;
+  int64 max_lifetime_seconds = 5;     // absolute lifetime bound (0 = profile default)
+}
+
+message GetFixtureInfoRequest {
+  string impl_id = 1;
+  bytes instance_data = 2;
+}
+message GetFixtureInfoResponse {
+  InstanceStatus status = 1;
+  map<string, Value> outputs = 2;
+  // High-level, human-readable status/error lines (e.g. an unhealthy verdict).
+  // The plugin does not enumerate per-element detail or ship logs; the client
+  // pulls those itself with the handed-over credentials.
+  repeated string messages = 3;
+  repeated ResourcePool consumed = 4;
 }
 
 message ResourceAmount {
@@ -140,50 +190,23 @@ message ResourcePool {
 }
 message ResourceRequests { repeated ResourcePool consumes = 1; }
 
-enum CreateProgressStatus {
-  CREATE_PROGRESS_UNKNOWN = 0;
-  CREATE_PROGRESS_ENQUEUED = 1;
-  CREATE_PROGRESS_CREATING = 2;
-  CREATE_PROGRESS_RUNNING = 3;
-  CREATE_PROGRESS_SUCCEEDED = 4;  // terminal success; result is set
-  CREATE_PROGRESS_ERROR = 5;      // terminal failure
-}
-
-enum FixtureElementStatus {
-  FIXTURE_ELEMENT_UNKNOWN = 0;
-  FIXTURE_ELEMENT_CREATING = 1;
-  FIXTURE_ELEMENT_RUNNING = 2;
-  FIXTURE_ELEMENT_ERROR = 3;
-}
-message FixtureElementStatusInfo {
-  string element_name = 1;
-  FixtureElementStatus status = 2;
-  repeated string messages = 3;
-}
-
-message CreateProgress {
-  CreateProgressStatus status = 1;
-  repeated FixtureElementStatusInfo element_infos = 2;
-  optional FixtureResult result = 3;  // set once, on CREATE_PROGRESS_SUCCEEDED
-}
-
-message FixtureResult {
-  map<string, Value> outputs = 1;
-  int64 idle_timeout_seconds = 2;
-  bytes instance_data = 3;  // opaque; handed back to Destroy/HealthCheck
-  repeated ResourcePool consumed = 4;
-}
-
 message DestroyRequest {
   string impl_id = 1;
   bytes instance_data = 2;
 }
 message DestroyResponse {}
-message HealthCheckRequest {
+
+message IssueAccessCredentialsRequest {
   string impl_id = 1;
   bytes instance_data = 2;
+  int64 validity_seconds = 4;  // lease TTL plus margin
 }
-message HealthCheckResponse {
-  bool healthy = 1;
-  string message = 2;
+message IssueAccessCredentialsResponse {
+  map<string, Value> credentials = 1;
+  bytes issued_handle = 2;  // opaque; passed back to ReleaseAccessCredentials
+}
+message ReleaseAccessCredentialsRequest {
+  string impl_id = 1;
+  bytes instance_data = 2;
+  bytes issued_handle = 3;
 }

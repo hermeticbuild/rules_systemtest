@@ -2,18 +2,18 @@
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
-use std::pin::Pin;
 
 use anyhow::{Context, Result};
 use clap::Parser;
 use serde_json::{Map, Value as JsonValue, json};
 use tokio::net::UnixListener;
-use tokio_stream::{Stream, wrappers::UnixListenerStream};
+use tokio_stream::wrappers::UnixListenerStream;
 use tonic::{Request, Response, Status, transport::Server};
 
 use systemtest_proto::systemtest::v1::{
-    CreateProgress, CreateProgressStatus, CreateRequest, DescribeResponse, DescribeResponses,
-    DestroyRequest, DestroyResponse, Empty, FixtureResult, HealthCheckRequest, HealthCheckResponse,
+    CreateRequest, CreateResponse, DescribeResponse, DescribeResponses, DestroyRequest,
+    DestroyResponse, Empty, GetFixtureInfoRequest, GetFixtureInfoResponse, InstanceStatus,
+    IssueAccessCredentialsRequest, IssueAccessCredentialsResponse, ReleaseAccessCredentialsRequest,
     ResourcePool, ResourceRequests, Value,
     coordinator_plugin_server::{CoordinatorPlugin, CoordinatorPluginServer},
     value::{SchemaBlob, Value as ValueKind},
@@ -65,13 +65,10 @@ impl CoordinatorPlugin for StubPlugin {
         Ok(Response::new(ResourceRequests { consumes: vec![] }))
     }
 
-    type CreateFixtureStream =
-        Pin<Box<dyn Stream<Item = Result<CreateProgress, Status>> + Send + 'static>>;
-
     async fn create_fixture(
         &self,
         request: Request<CreateRequest>,
-    ) -> Result<Response<Self::CreateFixtureStream>, Status> {
+    ) -> Result<Response<CreateResponse>, Status> {
         let req = request.into_inner();
 
         // The "ports" input arrives as a Value.str holding JSON like
@@ -84,31 +81,33 @@ impl CoordinatorPlugin for StubPlugin {
                 _ => None,
             })
             .unwrap_or_else(|| "{}".to_string());
-        let contents = ports_schema_blob(&ports_input);
 
-        let mut outputs = BTreeMap::new();
-        outputs.insert(
-            "endpoints".to_string(),
-            Value {
-                value: Some(ValueKind::SchemaBlob(SchemaBlob {
-                    schema_id: "systemtest.ports".to_string(),
-                    contents,
-                })),
-            },
-        );
+        // This plugin provisions nothing real, so its entire state is the
+        // requested port mapping. Stash it in `instance_data` so GetFixtureInfo
+        // can reproduce the same outputs statelessly.
+        Ok(Response::new(CreateResponse {
+            instance_data: ports_input.clone().into_bytes(),
+            outputs: ports_outputs(&ports_input),
+            consumed: vec![],
+            idle_timeout_seconds: 60,
+            max_lifetime_seconds: 0,
+        }))
+    }
 
-        let progress = CreateProgress {
-            status: CreateProgressStatus::CreateProgressSucceeded as i32,
-            element_infos: vec![],
-            result: Some(FixtureResult {
-                outputs,
-                idle_timeout_seconds: 60,
-                instance_data: b"stub".to_vec(),
-                consumed: vec![],
-            }),
-        };
-        let stream: Self::CreateFixtureStream = Box::pin(tokio_stream::once(Ok(progress)));
-        Ok(Response::new(stream))
+    async fn get_fixture_info(
+        &self,
+        request: Request<GetFixtureInfoRequest>,
+    ) -> Result<Response<GetFixtureInfoResponse>, Status> {
+        let req = request.into_inner();
+        // Recover the requested port mapping stashed in `instance_data` at create.
+        let ports_input = String::from_utf8(req.instance_data).unwrap_or_else(|_| "{}".to_string());
+        Ok(Response::new(GetFixtureInfoResponse {
+            // Nothing real to start, so it is immediately running.
+            status: InstanceStatus::InstanceRunning as i32,
+            outputs: ports_outputs(&ports_input),
+            messages: vec![],
+            consumed: vec![],
+        }))
     }
 
     async fn destroy_fixture(
@@ -119,22 +118,43 @@ impl CoordinatorPlugin for StubPlugin {
         Ok(Response::new(DestroyResponse {}))
     }
 
-    async fn health_check(
+    async fn issue_access_credentials(
         &self,
-        _request: Request<HealthCheckRequest>,
-    ) -> Result<Response<HealthCheckResponse>, Status> {
-        Ok(Response::new(HealthCheckResponse {
-            healthy: true,
-            message: String::new(),
-        }))
+        _request: Request<IssueAccessCredentialsRequest>,
+    ) -> Result<Response<IssueAccessCredentialsResponse>, Status> {
+        // Self-expiring / no credentials: the coordinator tolerates UNIMPLEMENTED.
+        Err(Status::unimplemented("dummy plugin issues no credentials"))
+    }
+
+    async fn release_access_credentials(
+        &self,
+        _request: Request<ReleaseAccessCredentialsRequest>,
+    ) -> Result<Response<Empty>, Status> {
+        Err(Status::unimplemented("dummy plugin issues no credentials"))
     }
 }
 
-/// Builds the `systemtest.ports` JSON, one entry per key in `ports_input`
-/// (JSON like `{"main":"6379"}`), per CONTRACT.md "Stub plugin behavior".
-/// Every entry is `tunnel: false`, bound to loopback -- this plugin
-/// provisions nothing real, it just echoes the requested port mapping back
-/// as if it were reachable there. Port values may be JSON strings or numbers.
+/// Builds the `systemtest.ports` outputs map, one entry per key in
+/// `ports_input` (JSON like `{"main":"6379"}`), per CONTRACT.md "Stub plugin
+/// behavior". Every entry is `tunnel: false`, bound to loopback -- this plugin
+/// provisions nothing real, it just echoes the requested port mapping back as
+/// if it were reachable there.
+fn ports_outputs(ports_input: &str) -> BTreeMap<String, Value> {
+    let mut outputs = BTreeMap::new();
+    outputs.insert(
+        "endpoints".to_string(),
+        Value {
+            value: Some(ValueKind::SchemaBlob(SchemaBlob {
+                schema_id: "systemtest.ports".to_string(),
+                contents: ports_schema_blob(ports_input),
+            })),
+        },
+    );
+    outputs
+}
+
+/// Builds the `systemtest.ports` JSON blob. Port values may be JSON strings or
+/// numbers.
 fn ports_schema_blob(ports_input: &str) -> Vec<u8> {
     let parsed: Map<String, JsonValue> = serde_json::from_str(ports_input).unwrap_or_default();
 

@@ -83,6 +83,9 @@ pub mod systemtest {
             /// human-readable; not part of identity
             #[prost(string, tag = "9")]
             pub name: ::prost::alloc::string::String,
+            /// tenancy/budget profile; "" means "default". In the fingerprint.
+            #[prost(string, tag = "10")]
+            pub profile_id: ::prost::alloc::string::String,
             #[prost(oneof = "fixture_description::Plugin", tags = "2, 3")]
             pub plugin: ::core::option::Option<fixture_description::Plugin>,
         }
@@ -103,7 +106,7 @@ pub mod systemtest {
             /// fully resolved
             #[prost(message, optional, tag = "1")]
             pub fixture: ::core::option::Option<FixtureDescription>,
-            /// reuse key
+            /// reuse key (advisory)
             #[prost(string, tag = "2")]
             pub client_id: ::prost::alloc::string::String,
             /// accounting only
@@ -126,6 +129,10 @@ pub mod systemtest {
                 ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, Value>,
             #[prost(string, repeated, tag = "4")]
             pub messages: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            /// per-consumer access material; never persisted (currently empty)
+            #[prost(btree_map = "string, message", tag = "5")]
+            pub credentials:
+                ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, Value>,
         }
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct KeepaliveRequest {
@@ -155,6 +162,10 @@ pub mod systemtest {
                 ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, Value>,
             #[prost(string, repeated, tag = "3")]
             pub messages: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            /// see TakeLeaseResponse.credentials (currently empty)
+            #[prost(btree_map = "string, message", tag = "4")]
+            pub credentials:
+                ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, Value>,
         }
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct DescribeResponses {
@@ -188,6 +199,9 @@ pub mod systemtest {
                 ::prost::alloc::string::String,
                 ::prost::alloc::string::String,
             >,
+            /// retry attempt (0-based)
+            #[prost(uint32, tag = "6")]
+            pub attempt: u32,
         }
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct CreateRequest {
@@ -199,6 +213,48 @@ pub mod systemtest {
                 ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, Value>,
             #[prost(message, optional, tag = "3")]
             pub metadata: ::core::option::Option<CreationMetadata>,
+            /// opaque operator blob, forwarded verbatim
+            #[prost(bytes = "vec", tag = "4")]
+            pub profile_config: ::prost::alloc::vec::Vec<u8>,
+        }
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct CreateResponse {
+            /// opaque; handed back to GetFixtureInfo/Destroy
+            #[prost(bytes = "vec", tag = "1")]
+            pub instance_data: ::prost::alloc::vec::Vec<u8>,
+            /// any immediately-known outputs
+            #[prost(btree_map = "string, message", tag = "2")]
+            pub outputs:
+                ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, Value>,
+            #[prost(message, repeated, tag = "3")]
+            pub consumed: ::prost::alloc::vec::Vec<ResourcePool>,
+            #[prost(int64, tag = "4")]
+            pub idle_timeout_seconds: i64,
+            /// absolute lifetime bound (0 = profile default)
+            #[prost(int64, tag = "5")]
+            pub max_lifetime_seconds: i64,
+        }
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct GetFixtureInfoRequest {
+            #[prost(string, tag = "1")]
+            pub impl_id: ::prost::alloc::string::String,
+            #[prost(bytes = "vec", tag = "2")]
+            pub instance_data: ::prost::alloc::vec::Vec<u8>,
+        }
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct GetFixtureInfoResponse {
+            #[prost(enumeration = "InstanceStatus", tag = "1")]
+            pub status: i32,
+            #[prost(btree_map = "string, message", tag = "2")]
+            pub outputs:
+                ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, Value>,
+            /// High-level, human-readable status/error lines (e.g. an unhealthy verdict).
+            /// The plugin does not enumerate per-element detail or ship logs; the client
+            /// pulls those itself with the handed-over credentials.
+            #[prost(string, repeated, tag = "3")]
+            pub messages: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+            #[prost(message, repeated, tag = "4")]
+            pub consumed: ::prost::alloc::vec::Vec<ResourcePool>,
         }
         #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct ResourceAmount {
@@ -222,38 +278,6 @@ pub mod systemtest {
             pub consumes: ::prost::alloc::vec::Vec<ResourcePool>,
         }
         #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct FixtureElementStatusInfo {
-            #[prost(string, tag = "1")]
-            pub element_name: ::prost::alloc::string::String,
-            #[prost(enumeration = "FixtureElementStatus", tag = "2")]
-            pub status: i32,
-            #[prost(string, repeated, tag = "3")]
-            pub messages: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-        }
-        #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct CreateProgress {
-            #[prost(enumeration = "CreateProgressStatus", tag = "1")]
-            pub status: i32,
-            #[prost(message, repeated, tag = "2")]
-            pub element_infos: ::prost::alloc::vec::Vec<FixtureElementStatusInfo>,
-            /// set once, on CREATE_PROGRESS_SUCCEEDED
-            #[prost(message, optional, tag = "3")]
-            pub result: ::core::option::Option<FixtureResult>,
-        }
-        #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct FixtureResult {
-            #[prost(btree_map = "string, message", tag = "1")]
-            pub outputs:
-                ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, Value>,
-            #[prost(int64, tag = "2")]
-            pub idle_timeout_seconds: i64,
-            /// opaque; handed back to Destroy/HealthCheck
-            #[prost(bytes = "vec", tag = "3")]
-            pub instance_data: ::prost::alloc::vec::Vec<u8>,
-            #[prost(message, repeated, tag = "4")]
-            pub consumed: ::prost::alloc::vec::Vec<ResourcePool>,
-        }
-        #[derive(Clone, PartialEq, ::prost::Message)]
         pub struct DestroyRequest {
             #[prost(string, tag = "1")]
             pub impl_id: ::prost::alloc::string::String,
@@ -263,18 +287,32 @@ pub mod systemtest {
         #[derive(Clone, Copy, PartialEq, ::prost::Message)]
         pub struct DestroyResponse {}
         #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct HealthCheckRequest {
+        pub struct IssueAccessCredentialsRequest {
             #[prost(string, tag = "1")]
             pub impl_id: ::prost::alloc::string::String,
             #[prost(bytes = "vec", tag = "2")]
             pub instance_data: ::prost::alloc::vec::Vec<u8>,
+            /// lease TTL plus margin
+            #[prost(int64, tag = "4")]
+            pub validity_seconds: i64,
         }
         #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct HealthCheckResponse {
-            #[prost(bool, tag = "1")]
-            pub healthy: bool,
-            #[prost(string, tag = "2")]
-            pub message: ::prost::alloc::string::String,
+        pub struct IssueAccessCredentialsResponse {
+            #[prost(btree_map = "string, message", tag = "1")]
+            pub credentials:
+                ::prost::alloc::collections::BTreeMap<::prost::alloc::string::String, Value>,
+            /// opaque; passed back to ReleaseAccessCredentials
+            #[prost(bytes = "vec", tag = "2")]
+            pub issued_handle: ::prost::alloc::vec::Vec<u8>,
+        }
+        #[derive(Clone, PartialEq, ::prost::Message)]
+        pub struct ReleaseAccessCredentialsRequest {
+            #[prost(string, tag = "1")]
+            pub impl_id: ::prost::alloc::string::String,
+            #[prost(bytes = "vec", tag = "2")]
+            pub instance_data: ::prost::alloc::vec::Vec<u8>,
+            #[prost(bytes = "vec", tag = "3")]
+            pub issued_handle: ::prost::alloc::vec::Vec<u8>,
         }
         #[derive(
             Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
@@ -310,78 +348,49 @@ pub mod systemtest {
                 }
             }
         }
+        /// Lifecycle status of a provisioned fixture instance, as reported by the
+        /// plugin's GetFixtureInfo. Drives the coordinator's reconciler.
         #[derive(
             Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
         )]
         #[repr(i32)]
-        pub enum CreateProgressStatus {
-            CreateProgressUnknown = 0,
-            CreateProgressEnqueued = 1,
-            CreateProgressCreating = 2,
-            CreateProgressRunning = 3,
-            /// terminal success; result is set
-            CreateProgressSucceeded = 4,
+        pub enum InstanceStatus {
+            Unknown = 0,
+            /// created, not yet ready
+            InstanceStarting = 1,
+            /// ready and healthy
+            InstanceRunning = 2,
+            /// being torn down
+            InstanceShuttingDown = 3,
             /// terminal failure
-            CreateProgressError = 5,
+            InstanceError = 4,
+            /// gone / unknown to the plugin
+            InstanceDefunct = 5,
         }
-        impl CreateProgressStatus {
+        impl InstanceStatus {
             /// String value of the enum field names used in the ProtoBuf definition.
             ///
             /// The values are not transformed in any way and thus are considered stable
             /// (if the ProtoBuf definition does not change) and safe for programmatic use.
             pub fn as_str_name(&self) -> &'static str {
                 match self {
-                    Self::CreateProgressUnknown => "CREATE_PROGRESS_UNKNOWN",
-                    Self::CreateProgressEnqueued => "CREATE_PROGRESS_ENQUEUED",
-                    Self::CreateProgressCreating => "CREATE_PROGRESS_CREATING",
-                    Self::CreateProgressRunning => "CREATE_PROGRESS_RUNNING",
-                    Self::CreateProgressSucceeded => "CREATE_PROGRESS_SUCCEEDED",
-                    Self::CreateProgressError => "CREATE_PROGRESS_ERROR",
+                    Self::Unknown => "INSTANCE_STATUS_UNKNOWN",
+                    Self::InstanceStarting => "INSTANCE_STARTING",
+                    Self::InstanceRunning => "INSTANCE_RUNNING",
+                    Self::InstanceShuttingDown => "INSTANCE_SHUTTING_DOWN",
+                    Self::InstanceError => "INSTANCE_ERROR",
+                    Self::InstanceDefunct => "INSTANCE_DEFUNCT",
                 }
             }
             /// Creates an enum from field names used in the ProtoBuf definition.
             pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
                 match value {
-                    "CREATE_PROGRESS_UNKNOWN" => Some(Self::CreateProgressUnknown),
-                    "CREATE_PROGRESS_ENQUEUED" => Some(Self::CreateProgressEnqueued),
-                    "CREATE_PROGRESS_CREATING" => Some(Self::CreateProgressCreating),
-                    "CREATE_PROGRESS_RUNNING" => Some(Self::CreateProgressRunning),
-                    "CREATE_PROGRESS_SUCCEEDED" => Some(Self::CreateProgressSucceeded),
-                    "CREATE_PROGRESS_ERROR" => Some(Self::CreateProgressError),
-                    _ => None,
-                }
-            }
-        }
-        #[derive(
-            Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration,
-        )]
-        #[repr(i32)]
-        pub enum FixtureElementStatus {
-            FixtureElementUnknown = 0,
-            FixtureElementCreating = 1,
-            FixtureElementRunning = 2,
-            FixtureElementError = 3,
-        }
-        impl FixtureElementStatus {
-            /// String value of the enum field names used in the ProtoBuf definition.
-            ///
-            /// The values are not transformed in any way and thus are considered stable
-            /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-            pub fn as_str_name(&self) -> &'static str {
-                match self {
-                    Self::FixtureElementUnknown => "FIXTURE_ELEMENT_UNKNOWN",
-                    Self::FixtureElementCreating => "FIXTURE_ELEMENT_CREATING",
-                    Self::FixtureElementRunning => "FIXTURE_ELEMENT_RUNNING",
-                    Self::FixtureElementError => "FIXTURE_ELEMENT_ERROR",
-                }
-            }
-            /// Creates an enum from field names used in the ProtoBuf definition.
-            pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-                match value {
-                    "FIXTURE_ELEMENT_UNKNOWN" => Some(Self::FixtureElementUnknown),
-                    "FIXTURE_ELEMENT_CREATING" => Some(Self::FixtureElementCreating),
-                    "FIXTURE_ELEMENT_RUNNING" => Some(Self::FixtureElementRunning),
-                    "FIXTURE_ELEMENT_ERROR" => Some(Self::FixtureElementError),
+                    "INSTANCE_STATUS_UNKNOWN" => Some(Self::Unknown),
+                    "INSTANCE_STARTING" => Some(Self::InstanceStarting),
+                    "INSTANCE_RUNNING" => Some(Self::InstanceRunning),
+                    "INSTANCE_SHUTTING_DOWN" => Some(Self::InstanceShuttingDown),
+                    "INSTANCE_ERROR" => Some(Self::InstanceError),
+                    "INSTANCE_DEFUNCT" => Some(Self::InstanceDefunct),
                     _ => None,
                 }
             }
@@ -877,7 +886,6 @@ pub mod systemtest {
             )]
             use tonic::codegen::http::Uri;
             use tonic::codegen::*;
-            ///
             #[derive(Debug, Clone)]
             pub struct CoordinatorPluginClient<T> {
                 inner: tonic::client::Grpc<T>,
@@ -957,7 +965,6 @@ pub mod systemtest {
                     self.inner = self.inner.max_encoding_message_size(limit);
                     self
                 }
-                ///
                 pub async fn describe_plugin(
                     &mut self,
                     request: impl tonic::IntoRequest<super::Empty>,
@@ -977,7 +984,6 @@ pub mod systemtest {
                     ));
                     self.inner.unary(req, path, codec).await
                 }
-                ///
                 pub async fn get_resource_pool(
                     &mut self,
                     request: impl tonic::IntoRequest<super::CreateRequest>,
@@ -1019,10 +1025,8 @@ pub mod systemtest {
                 pub async fn create_fixture(
                     &mut self,
                     request: impl tonic::IntoRequest<super::CreateRequest>,
-                ) -> std::result::Result<
-                    tonic::Response<tonic::codec::Streaming<super::CreateProgress>>,
-                    tonic::Status,
-                > {
+                ) -> std::result::Result<tonic::Response<super::CreateResponse>, tonic::Status>
+                {
                     self.inner.ready().await.map_err(|e| {
                         tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
                     })?;
@@ -1035,7 +1039,28 @@ pub mod systemtest {
                         "systemtest.v1.CoordinatorPlugin",
                         "CreateFixture",
                     ));
-                    self.inner.server_streaming(req, path, codec).await
+                    self.inner.unary(req, path, codec).await
+                }
+                pub async fn get_fixture_info(
+                    &mut self,
+                    request: impl tonic::IntoRequest<super::GetFixtureInfoRequest>,
+                ) -> std::result::Result<
+                    tonic::Response<super::GetFixtureInfoResponse>,
+                    tonic::Status,
+                > {
+                    self.inner.ready().await.map_err(|e| {
+                        tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+                    })?;
+                    let codec = tonic::codec::ProstCodec::default();
+                    let path = http::uri::PathAndQuery::from_static(
+                        "/systemtest.v1.CoordinatorPlugin/GetFixtureInfo",
+                    );
+                    let mut req = request.into_request();
+                    req.extensions_mut().insert(GrpcMethod::new(
+                        "systemtest.v1.CoordinatorPlugin",
+                        "GetFixtureInfo",
+                    ));
+                    self.inner.unary(req, path, codec).await
                 }
                 pub async fn destroy_fixture(
                     &mut self,
@@ -1056,22 +1081,43 @@ pub mod systemtest {
                     ));
                     self.inner.unary(req, path, codec).await
                 }
-                pub async fn health_check(
+                pub async fn issue_access_credentials(
                     &mut self,
-                    request: impl tonic::IntoRequest<super::HealthCheckRequest>,
-                ) -> std::result::Result<tonic::Response<super::HealthCheckResponse>, tonic::Status>
+                    request: impl tonic::IntoRequest<super::IssueAccessCredentialsRequest>,
+                ) -> std::result::Result<
+                    tonic::Response<super::IssueAccessCredentialsResponse>,
+                    tonic::Status,
+                > {
+                    self.inner.ready().await.map_err(|e| {
+                        tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+                    })?;
+                    let codec = tonic::codec::ProstCodec::default();
+                    let path = http::uri::PathAndQuery::from_static(
+                        "/systemtest.v1.CoordinatorPlugin/IssueAccessCredentials",
+                    );
+                    let mut req = request.into_request();
+                    req.extensions_mut().insert(GrpcMethod::new(
+                        "systemtest.v1.CoordinatorPlugin",
+                        "IssueAccessCredentials",
+                    ));
+                    self.inner.unary(req, path, codec).await
+                }
+                pub async fn release_access_credentials(
+                    &mut self,
+                    request: impl tonic::IntoRequest<super::ReleaseAccessCredentialsRequest>,
+                ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>
                 {
                     self.inner.ready().await.map_err(|e| {
                         tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
                     })?;
                     let codec = tonic::codec::ProstCodec::default();
                     let path = http::uri::PathAndQuery::from_static(
-                        "/systemtest.v1.CoordinatorPlugin/HealthCheck",
+                        "/systemtest.v1.CoordinatorPlugin/ReleaseAccessCredentials",
                     );
                     let mut req = request.into_request();
                     req.extensions_mut().insert(GrpcMethod::new(
                         "systemtest.v1.CoordinatorPlugin",
-                        "HealthCheck",
+                        "ReleaseAccessCredentials",
                     ));
                     self.inner.unary(req, path, codec).await
                 }
@@ -1090,12 +1136,10 @@ pub mod systemtest {
             /// Generated trait containing gRPC methods that should be implemented for use with CoordinatorPluginServer.
             #[async_trait]
             pub trait CoordinatorPlugin: std::marker::Send + std::marker::Sync + 'static {
-                ///
                 async fn describe_plugin(
                     &self,
                     request: tonic::Request<super::Empty>,
                 ) -> std::result::Result<tonic::Response<super::DescribeResponses>, tonic::Status>;
-                ///
                 async fn get_resource_pool(
                     &self,
                     request: tonic::Request<super::CreateRequest>,
@@ -1104,25 +1148,33 @@ pub mod systemtest {
                     &self,
                     request: tonic::Request<super::CreateRequest>,
                 ) -> std::result::Result<tonic::Response<super::ResourceRequests>, tonic::Status>;
-                /// Server streaming response type for the CreateFixture method.
-                type CreateFixtureStream: tonic::codegen::tokio_stream::Stream<
-                        Item = std::result::Result<super::CreateProgress, tonic::Status>,
-                    > + std::marker::Send
-                    + 'static;
                 async fn create_fixture(
                     &self,
                     request: tonic::Request<super::CreateRequest>,
-                ) -> std::result::Result<tonic::Response<Self::CreateFixtureStream>, tonic::Status>;
+                ) -> std::result::Result<tonic::Response<super::CreateResponse>, tonic::Status>;
+                async fn get_fixture_info(
+                    &self,
+                    request: tonic::Request<super::GetFixtureInfoRequest>,
+                ) -> std::result::Result<
+                    tonic::Response<super::GetFixtureInfoResponse>,
+                    tonic::Status,
+                >;
                 async fn destroy_fixture(
                     &self,
                     request: tonic::Request<super::DestroyRequest>,
                 ) -> std::result::Result<tonic::Response<super::DestroyResponse>, tonic::Status>;
-                async fn health_check(
+                async fn issue_access_credentials(
                     &self,
-                    request: tonic::Request<super::HealthCheckRequest>,
-                ) -> std::result::Result<tonic::Response<super::HealthCheckResponse>, tonic::Status>;
+                    request: tonic::Request<super::IssueAccessCredentialsRequest>,
+                ) -> std::result::Result<
+                    tonic::Response<super::IssueAccessCredentialsResponse>,
+                    tonic::Status,
+                >;
+                async fn release_access_credentials(
+                    &self,
+                    request: tonic::Request<super::ReleaseAccessCredentialsRequest>,
+                ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
             }
-            ///
             #[derive(Debug)]
             pub struct CoordinatorPluginServer<T> {
                 inner: Arc<T>,
@@ -1331,13 +1383,12 @@ pub mod systemtest {
                             #[allow(non_camel_case_types)]
                             struct CreateFixtureSvc<T: CoordinatorPlugin>(pub Arc<T>);
                             impl<T: CoordinatorPlugin>
-                                tonic::server::ServerStreamingService<super::CreateRequest>
+                                tonic::server::UnaryService<super::CreateRequest>
                                 for CreateFixtureSvc<T>
                             {
-                                type Response = super::CreateProgress;
-                                type ResponseStream = T::CreateFixtureStream;
+                                type Response = super::CreateResponse;
                                 type Future =
-                                    BoxFuture<tonic::Response<Self::ResponseStream>, tonic::Status>;
+                                    BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                                 fn call(
                                     &mut self,
                                     request: tonic::Request<super::CreateRequest>,
@@ -1367,7 +1418,51 @@ pub mod systemtest {
                                         max_decoding_message_size,
                                         max_encoding_message_size,
                                     );
-                                let res = grpc.server_streaming(method, req).await;
+                                let res = grpc.unary(method, req).await;
+                                Ok(res)
+                            };
+                            Box::pin(fut)
+                        }
+                        "/systemtest.v1.CoordinatorPlugin/GetFixtureInfo" => {
+                            #[allow(non_camel_case_types)]
+                            struct GetFixtureInfoSvc<T: CoordinatorPlugin>(pub Arc<T>);
+                            impl<T: CoordinatorPlugin>
+                                tonic::server::UnaryService<super::GetFixtureInfoRequest>
+                                for GetFixtureInfoSvc<T>
+                            {
+                                type Response = super::GetFixtureInfoResponse;
+                                type Future =
+                                    BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                                fn call(
+                                    &mut self,
+                                    request: tonic::Request<super::GetFixtureInfoRequest>,
+                                ) -> Self::Future {
+                                    let inner = Arc::clone(&self.0);
+                                    let fut = async move {
+                                        <T as CoordinatorPlugin>::get_fixture_info(&inner, request)
+                                            .await
+                                    };
+                                    Box::pin(fut)
+                                }
+                            }
+                            let accept_compression_encodings = self.accept_compression_encodings;
+                            let send_compression_encodings = self.send_compression_encodings;
+                            let max_decoding_message_size = self.max_decoding_message_size;
+                            let max_encoding_message_size = self.max_encoding_message_size;
+                            let inner = self.inner.clone();
+                            let fut = async move {
+                                let method = GetFixtureInfoSvc(inner);
+                                let codec = tonic::codec::ProstCodec::default();
+                                let mut grpc = tonic::server::Grpc::new(codec)
+                                    .apply_compression_config(
+                                        accept_compression_encodings,
+                                        send_compression_encodings,
+                                    )
+                                    .apply_max_message_size_config(
+                                        max_decoding_message_size,
+                                        max_encoding_message_size,
+                                    );
+                                let res = grpc.unary(method, req).await;
                                 Ok(res)
                             };
                             Box::pin(fut)
@@ -1416,24 +1511,26 @@ pub mod systemtest {
                             };
                             Box::pin(fut)
                         }
-                        "/systemtest.v1.CoordinatorPlugin/HealthCheck" => {
+                        "/systemtest.v1.CoordinatorPlugin/IssueAccessCredentials" => {
                             #[allow(non_camel_case_types)]
-                            struct HealthCheckSvc<T: CoordinatorPlugin>(pub Arc<T>);
+                            struct IssueAccessCredentialsSvc<T: CoordinatorPlugin>(pub Arc<T>);
                             impl<T: CoordinatorPlugin>
-                                tonic::server::UnaryService<super::HealthCheckRequest>
-                                for HealthCheckSvc<T>
+                                tonic::server::UnaryService<super::IssueAccessCredentialsRequest>
+                                for IssueAccessCredentialsSvc<T>
                             {
-                                type Response = super::HealthCheckResponse;
+                                type Response = super::IssueAccessCredentialsResponse;
                                 type Future =
                                     BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                                 fn call(
                                     &mut self,
-                                    request: tonic::Request<super::HealthCheckRequest>,
+                                    request: tonic::Request<super::IssueAccessCredentialsRequest>,
                                 ) -> Self::Future {
                                     let inner = Arc::clone(&self.0);
                                     let fut = async move {
-                                        <T as CoordinatorPlugin>::health_check(&inner, request)
-                                            .await
+                                        <T as CoordinatorPlugin>::issue_access_credentials(
+                                            &inner, request,
+                                        )
+                                        .await
                                     };
                                     Box::pin(fut)
                                 }
@@ -1444,7 +1541,53 @@ pub mod systemtest {
                             let max_encoding_message_size = self.max_encoding_message_size;
                             let inner = self.inner.clone();
                             let fut = async move {
-                                let method = HealthCheckSvc(inner);
+                                let method = IssueAccessCredentialsSvc(inner);
+                                let codec = tonic::codec::ProstCodec::default();
+                                let mut grpc = tonic::server::Grpc::new(codec)
+                                    .apply_compression_config(
+                                        accept_compression_encodings,
+                                        send_compression_encodings,
+                                    )
+                                    .apply_max_message_size_config(
+                                        max_decoding_message_size,
+                                        max_encoding_message_size,
+                                    );
+                                let res = grpc.unary(method, req).await;
+                                Ok(res)
+                            };
+                            Box::pin(fut)
+                        }
+                        "/systemtest.v1.CoordinatorPlugin/ReleaseAccessCredentials" => {
+                            #[allow(non_camel_case_types)]
+                            struct ReleaseAccessCredentialsSvc<T: CoordinatorPlugin>(pub Arc<T>);
+                            impl<T: CoordinatorPlugin>
+                                tonic::server::UnaryService<super::ReleaseAccessCredentialsRequest>
+                                for ReleaseAccessCredentialsSvc<T>
+                            {
+                                type Response = super::Empty;
+                                type Future =
+                                    BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                                fn call(
+                                    &mut self,
+                                    request: tonic::Request<super::ReleaseAccessCredentialsRequest>,
+                                ) -> Self::Future {
+                                    let inner = Arc::clone(&self.0);
+                                    let fut = async move {
+                                        <T as CoordinatorPlugin>::release_access_credentials(
+                                            &inner, request,
+                                        )
+                                        .await
+                                    };
+                                    Box::pin(fut)
+                                }
+                            }
+                            let accept_compression_encodings = self.accept_compression_encodings;
+                            let send_compression_encodings = self.send_compression_encodings;
+                            let max_decoding_message_size = self.max_decoding_message_size;
+                            let max_encoding_message_size = self.max_encoding_message_size;
+                            let inner = self.inner.clone();
+                            let fut = async move {
+                                let method = ReleaseAccessCredentialsSvc(inner);
                                 let codec = tonic::codec::ProstCodec::default();
                                 let mut grpc = tonic::server::Grpc::new(codec)
                                     .apply_compression_config(

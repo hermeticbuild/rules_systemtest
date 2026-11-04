@@ -233,12 +233,14 @@ var CoordinatorService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	CoordinatorPlugin_DescribePlugin_FullMethodName      = "/systemtest.v1.CoordinatorPlugin/DescribePlugin"
-	CoordinatorPlugin_GetResourcePool_FullMethodName     = "/systemtest.v1.CoordinatorPlugin/GetResourcePool"
-	CoordinatorPlugin_GetResourceRequests_FullMethodName = "/systemtest.v1.CoordinatorPlugin/GetResourceRequests"
-	CoordinatorPlugin_CreateFixture_FullMethodName       = "/systemtest.v1.CoordinatorPlugin/CreateFixture"
-	CoordinatorPlugin_DestroyFixture_FullMethodName      = "/systemtest.v1.CoordinatorPlugin/DestroyFixture"
-	CoordinatorPlugin_HealthCheck_FullMethodName         = "/systemtest.v1.CoordinatorPlugin/HealthCheck"
+	CoordinatorPlugin_DescribePlugin_FullMethodName           = "/systemtest.v1.CoordinatorPlugin/DescribePlugin"
+	CoordinatorPlugin_GetResourcePool_FullMethodName          = "/systemtest.v1.CoordinatorPlugin/GetResourcePool"
+	CoordinatorPlugin_GetResourceRequests_FullMethodName      = "/systemtest.v1.CoordinatorPlugin/GetResourceRequests"
+	CoordinatorPlugin_CreateFixture_FullMethodName            = "/systemtest.v1.CoordinatorPlugin/CreateFixture"
+	CoordinatorPlugin_GetFixtureInfo_FullMethodName           = "/systemtest.v1.CoordinatorPlugin/GetFixtureInfo"
+	CoordinatorPlugin_DestroyFixture_FullMethodName           = "/systemtest.v1.CoordinatorPlugin/DestroyFixture"
+	CoordinatorPlugin_IssueAccessCredentials_FullMethodName   = "/systemtest.v1.CoordinatorPlugin/IssueAccessCredentials"
+	CoordinatorPlugin_ReleaseAccessCredentials_FullMethodName = "/systemtest.v1.CoordinatorPlugin/ReleaseAccessCredentials"
 )
 
 // CoordinatorPluginClient is the client API for CoordinatorPlugin service.
@@ -248,9 +250,11 @@ type CoordinatorPluginClient interface {
 	DescribePlugin(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*DescribeResponses, error)
 	GetResourcePool(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*ResourcePool, error)
 	GetResourceRequests(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*ResourceRequests, error)
-	CreateFixture(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[CreateProgress], error)
+	CreateFixture(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
+	GetFixtureInfo(ctx context.Context, in *GetFixtureInfoRequest, opts ...grpc.CallOption) (*GetFixtureInfoResponse, error)
 	DestroyFixture(ctx context.Context, in *DestroyRequest, opts ...grpc.CallOption) (*DestroyResponse, error)
-	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
+	IssueAccessCredentials(ctx context.Context, in *IssueAccessCredentialsRequest, opts ...grpc.CallOption) (*IssueAccessCredentialsResponse, error)
+	ReleaseAccessCredentials(ctx context.Context, in *ReleaseAccessCredentialsRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type coordinatorPluginClient struct {
@@ -291,24 +295,25 @@ func (c *coordinatorPluginClient) GetResourceRequests(ctx context.Context, in *C
 	return out, nil
 }
 
-func (c *coordinatorPluginClient) CreateFixture(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[CreateProgress], error) {
+func (c *coordinatorPluginClient) CreateFixture(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &CoordinatorPlugin_ServiceDesc.Streams[0], CoordinatorPlugin_CreateFixture_FullMethodName, cOpts...)
+	out := new(CreateResponse)
+	err := c.cc.Invoke(ctx, CoordinatorPlugin_CreateFixture_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[CreateRequest, CreateProgress]{ClientStream: stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
+	return out, nil
 }
 
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type CoordinatorPlugin_CreateFixtureClient = grpc.ServerStreamingClient[CreateProgress]
+func (c *coordinatorPluginClient) GetFixtureInfo(ctx context.Context, in *GetFixtureInfoRequest, opts ...grpc.CallOption) (*GetFixtureInfoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFixtureInfoResponse)
+	err := c.cc.Invoke(ctx, CoordinatorPlugin_GetFixtureInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
 
 func (c *coordinatorPluginClient) DestroyFixture(ctx context.Context, in *DestroyRequest, opts ...grpc.CallOption) (*DestroyResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -320,10 +325,20 @@ func (c *coordinatorPluginClient) DestroyFixture(ctx context.Context, in *Destro
 	return out, nil
 }
 
-func (c *coordinatorPluginClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+func (c *coordinatorPluginClient) IssueAccessCredentials(ctx context.Context, in *IssueAccessCredentialsRequest, opts ...grpc.CallOption) (*IssueAccessCredentialsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(HealthCheckResponse)
-	err := c.cc.Invoke(ctx, CoordinatorPlugin_HealthCheck_FullMethodName, in, out, cOpts...)
+	out := new(IssueAccessCredentialsResponse)
+	err := c.cc.Invoke(ctx, CoordinatorPlugin_IssueAccessCredentials_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *coordinatorPluginClient) ReleaseAccessCredentials(ctx context.Context, in *ReleaseAccessCredentialsRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, CoordinatorPlugin_ReleaseAccessCredentials_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -337,9 +352,11 @@ type CoordinatorPluginServer interface {
 	DescribePlugin(context.Context, *Empty) (*DescribeResponses, error)
 	GetResourcePool(context.Context, *CreateRequest) (*ResourcePool, error)
 	GetResourceRequests(context.Context, *CreateRequest) (*ResourceRequests, error)
-	CreateFixture(*CreateRequest, grpc.ServerStreamingServer[CreateProgress]) error
+	CreateFixture(context.Context, *CreateRequest) (*CreateResponse, error)
+	GetFixtureInfo(context.Context, *GetFixtureInfoRequest) (*GetFixtureInfoResponse, error)
 	DestroyFixture(context.Context, *DestroyRequest) (*DestroyResponse, error)
-	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
+	IssueAccessCredentials(context.Context, *IssueAccessCredentialsRequest) (*IssueAccessCredentialsResponse, error)
+	ReleaseAccessCredentials(context.Context, *ReleaseAccessCredentialsRequest) (*Empty, error)
 }
 
 // UnimplementedCoordinatorPluginServer should be embedded to have
@@ -358,14 +375,20 @@ func (UnimplementedCoordinatorPluginServer) GetResourcePool(context.Context, *Cr
 func (UnimplementedCoordinatorPluginServer) GetResourceRequests(context.Context, *CreateRequest) (*ResourceRequests, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetResourceRequests not implemented")
 }
-func (UnimplementedCoordinatorPluginServer) CreateFixture(*CreateRequest, grpc.ServerStreamingServer[CreateProgress]) error {
-	return status.Errorf(codes.Unimplemented, "method CreateFixture not implemented")
+func (UnimplementedCoordinatorPluginServer) CreateFixture(context.Context, *CreateRequest) (*CreateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateFixture not implemented")
+}
+func (UnimplementedCoordinatorPluginServer) GetFixtureInfo(context.Context, *GetFixtureInfoRequest) (*GetFixtureInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFixtureInfo not implemented")
 }
 func (UnimplementedCoordinatorPluginServer) DestroyFixture(context.Context, *DestroyRequest) (*DestroyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DestroyFixture not implemented")
 }
-func (UnimplementedCoordinatorPluginServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
+func (UnimplementedCoordinatorPluginServer) IssueAccessCredentials(context.Context, *IssueAccessCredentialsRequest) (*IssueAccessCredentialsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IssueAccessCredentials not implemented")
+}
+func (UnimplementedCoordinatorPluginServer) ReleaseAccessCredentials(context.Context, *ReleaseAccessCredentialsRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReleaseAccessCredentials not implemented")
 }
 func (UnimplementedCoordinatorPluginServer) testEmbeddedByValue() {}
 
@@ -441,16 +464,41 @@ func _CoordinatorPlugin_GetResourceRequests_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CoordinatorPlugin_CreateFixture_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(CreateRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _CoordinatorPlugin_CreateFixture_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(CoordinatorPluginServer).CreateFixture(m, &grpc.GenericServerStream[CreateRequest, CreateProgress]{ServerStream: stream})
+	if interceptor == nil {
+		return srv.(CoordinatorPluginServer).CreateFixture(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CoordinatorPlugin_CreateFixture_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoordinatorPluginServer).CreateFixture(ctx, req.(*CreateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type CoordinatorPlugin_CreateFixtureServer = grpc.ServerStreamingServer[CreateProgress]
+func _CoordinatorPlugin_GetFixtureInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFixtureInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoordinatorPluginServer).GetFixtureInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CoordinatorPlugin_GetFixtureInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoordinatorPluginServer).GetFixtureInfo(ctx, req.(*GetFixtureInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
 
 func _CoordinatorPlugin_DestroyFixture_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DestroyRequest)
@@ -470,20 +518,38 @@ func _CoordinatorPlugin_DestroyFixture_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CoordinatorPlugin_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HealthCheckRequest)
+func _CoordinatorPlugin_IssueAccessCredentials_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueAccessCredentialsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CoordinatorPluginServer).HealthCheck(ctx, in)
+		return srv.(CoordinatorPluginServer).IssueAccessCredentials(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CoordinatorPlugin_HealthCheck_FullMethodName,
+		FullMethod: CoordinatorPlugin_IssueAccessCredentials_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CoordinatorPluginServer).HealthCheck(ctx, req.(*HealthCheckRequest))
+		return srv.(CoordinatorPluginServer).IssueAccessCredentials(ctx, req.(*IssueAccessCredentialsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CoordinatorPlugin_ReleaseAccessCredentials_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReleaseAccessCredentialsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CoordinatorPluginServer).ReleaseAccessCredentials(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CoordinatorPlugin_ReleaseAccessCredentials_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CoordinatorPluginServer).ReleaseAccessCredentials(ctx, req.(*ReleaseAccessCredentialsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -508,20 +574,26 @@ var CoordinatorPlugin_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CoordinatorPlugin_GetResourceRequests_Handler,
 		},
 		{
+			MethodName: "CreateFixture",
+			Handler:    _CoordinatorPlugin_CreateFixture_Handler,
+		},
+		{
+			MethodName: "GetFixtureInfo",
+			Handler:    _CoordinatorPlugin_GetFixtureInfo_Handler,
+		},
+		{
 			MethodName: "DestroyFixture",
 			Handler:    _CoordinatorPlugin_DestroyFixture_Handler,
 		},
 		{
-			MethodName: "HealthCheck",
-			Handler:    _CoordinatorPlugin_HealthCheck_Handler,
+			MethodName: "IssueAccessCredentials",
+			Handler:    _CoordinatorPlugin_IssueAccessCredentials_Handler,
 		},
-	},
-	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "CreateFixture",
-			Handler:       _CoordinatorPlugin_CreateFixture_Handler,
-			ServerStreams: true,
+			MethodName: "ReleaseAccessCredentials",
+			Handler:    _CoordinatorPlugin_ReleaseAccessCredentials_Handler,
 		},
 	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "proto/systemtest.proto",
 }
