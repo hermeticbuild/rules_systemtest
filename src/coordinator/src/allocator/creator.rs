@@ -1,9 +1,9 @@
 //! Creator task: assigns leases to fixtures, provisions what's missing (with a
 //! persist-before-create saga), and reclaims capacity under pressure.
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
@@ -13,6 +13,7 @@ use crate::allocator::PeriodicTask;
 use crate::allocator::lease_updater::{
     FixtureAction, LeaseDecision, Outcome, WorkingSet, advance_leases,
 };
+use crate::credentials::{CredentialStore, IssuedForLease, IssuedHandle};
 use crate::model::budget::{Capacity, Quota, QuotaError};
 use crate::model::fixture::{FixtureFingerprint, FixtureId, FixtureState};
 use crate::model::lease::{LeaseFixtureStatus, LeaseId, LeaseState};
@@ -21,9 +22,14 @@ use crate::plugin::{CreateMetadata, FixtureFactory};
 use crate::store::{Mutation, Store};
 use systemtest_proto::systemtest::v1 as pb;
 
+/// Validity requested when issuing per-consumer credentials. Must outlast the
+/// lease; the plugin reclaims on lapse (the leak backstop).
+const CREDENTIAL_VALIDITY: Duration = Duration::from_secs(3600);
+
 pub struct Creator {
     store: Arc<dyn Store>,
     factory: Arc<dyn FixtureFactory>,
+    credentials: Arc<CredentialStore>,
     settings: Settings,
     now: fn() -> SystemTime,
 }
@@ -38,12 +44,14 @@ impl Creator {
     pub fn new(
         store: Arc<dyn Store>,
         factory: Arc<dyn FixtureFactory>,
+        credentials: Arc<CredentialStore>,
         settings: Settings,
         now: fn() -> SystemTime,
     ) -> Self {
         Creator {
             store,
             factory,
+            credentials,
             settings,
             now,
         }
@@ -146,6 +154,7 @@ impl Creator {
             let Some(lease) = leases_by_id.get(&lease_id) else {
                 continue;
             };
+            let became_ready = matches!(decision.status, LeaseFixtureStatus::Ready);
             let result = match decision.action {
                 None => {
                     self.store
@@ -188,8 +197,59 @@ impl Creator {
             };
             if let Err(e) = result {
                 error!("advancing lease {}: {e:#}", lease_id.as_str());
+                continue;
+            }
+            // Issue per-consumer credentials once, as the lease reaches ready
+            // (immediately before Status will report SUCCEEDED).
+            if became_ready {
+                self.issue_credentials_for(lease).await;
             }
         }
+    }
+
+    /// Issue per-consumer access material for a ready lease and hold it in the
+    /// credential store. Idempotent; tolerant of plugins that issue nothing.
+    async fn issue_credentials_for(&self, lease: &LeaseState) {
+        if self.credentials.contains(&lease.id) {
+            return;
+        }
+        let fixtures = self
+            .store
+            .fixtures_for_lease(&lease.id)
+            .await
+            .unwrap_or_default();
+        let mut credentials = BTreeMap::new();
+        let mut handles = Vec::new();
+        for fixture in fixtures {
+            match self
+                .factory
+                .issue_access_credentials(
+                    &fixture.spec.impl_id,
+                    &fixture.instance_data,
+                    CREDENTIAL_VALIDITY,
+                )
+                .await
+            {
+                Ok(issued) => {
+                    credentials.extend(issued.credentials);
+                    if !issued.handle.is_empty() {
+                        handles.push(IssuedHandle {
+                            impl_id: fixture.spec.impl_id.clone(),
+                            instance_data: fixture.instance_data.clone(),
+                            handle: issued.handle,
+                        });
+                    }
+                }
+                Err(e) => warn!("issuing credentials for lease {}: {e:#}", lease.id.as_str()),
+            }
+        }
+        self.credentials.put(
+            lease.id.clone(),
+            IssuedForLease {
+                credentials,
+                handles,
+            },
+        );
     }
 
     /// Persist a `Creating` fixture record, then provision it, then wire it to
@@ -227,7 +287,6 @@ impl Creator {
             fixture_id: fixture_id.clone(),
             client_id: String::new(),
             owner: lease.owning_user_name.clone(),
-            identity: None,
             attempt,
         };
         let mut result = self
@@ -369,9 +428,13 @@ mod tests {
             cpu_mili: 100,
             memory_bytes: 1024,
         }));
-        let creator = Creator::new(store.clone(), factory.clone(), settings(), || {
-            UNIX_EPOCH + Duration::from_secs(10)
-        });
+        let creator = Creator::new(
+            store.clone(),
+            factory.clone(),
+            Arc::new(CredentialStore::new()),
+            settings(),
+            || UNIX_EPOCH + Duration::from_secs(10),
+        );
 
         creator.run_once().await.unwrap();
 
@@ -400,9 +463,13 @@ mod tests {
             memory_bytes: 1024,
         });
         factory.fail_create = true;
-        let creator = Creator::new(store.clone(), Arc::new(factory), settings(), || {
-            UNIX_EPOCH + Duration::from_secs(10)
-        });
+        let creator = Creator::new(
+            store.clone(),
+            Arc::new(factory),
+            Arc::new(CredentialStore::new()),
+            settings(),
+            || UNIX_EPOCH + Duration::from_secs(10),
+        );
 
         creator.run_once().await.unwrap();
 

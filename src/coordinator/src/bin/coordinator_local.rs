@@ -17,6 +17,7 @@ use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::Server;
 
 use coordinator::allocator::FixtureAllocator;
+use coordinator::credentials::CredentialStore;
 use coordinator::model::settings::Settings;
 use coordinator::plugin::FixtureFactory;
 use coordinator::plugin::grpc::GrpcPluginFactory;
@@ -88,17 +89,23 @@ async fn main() -> Result<()> {
         instance_dir.clone(),
         PLUGIN_STARTUP_TIMEOUT,
     ));
+    let credentials = Arc::new(CredentialStore::new());
     let settings = Settings::default_local();
 
     // Reconcile leases in the background.
-    let allocator = FixtureAllocator::new(store.clone(), factory, settings);
+    let allocator = FixtureAllocator::new(
+        store.clone(),
+        factory.clone(),
+        credentials.clone(),
+        settings,
+    );
     tokio::spawn(async move {
         if let Err(e) = allocator.run().await {
             eprintln!("allocator stopped: {e:#}");
         }
     });
 
-    let service = Service::new(store);
+    let service = Service::new(store, factory, credentials);
     Server::builder()
         .add_service(CoordinatorServiceServer::new(service))
         .serve_with_incoming(incoming)

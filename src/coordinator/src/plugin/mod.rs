@@ -47,6 +47,13 @@ pub struct FixtureInfo {
     pub consumed: Capacity,
 }
 
+/// Per-consumer access material plus an opaque handle for early return.
+#[derive(Clone, Debug, Default)]
+pub struct IssuedCredentials {
+    pub credentials: BTreeMap<String, pb::Value>,
+    pub handle: Vec<u8>,
+}
+
 /// Abstracts how fixtures are provisioned. Implementations must not
 /// over-estimate capacity (under-estimating is allowed).
 #[async_trait]
@@ -71,4 +78,27 @@ pub trait FixtureFactory: Send + Sync {
 
     /// Tear a fixture down.
     async fn destroy(&self, impl_id: &str, instance_data: &[u8]) -> Result<()>;
+
+    /// Mint per-consumer access material. Optional: a plugin that issues none
+    /// returns the default (empty), and `UNIMPLEMENTED` from the wire is
+    /// treated as empty.
+    async fn issue_access_credentials(
+        &self,
+        _impl_id: &str,
+        _instance_data: &[u8],
+        _validity: Duration,
+    ) -> Result<IssuedCredentials> {
+        Ok(IssuedCredentials::default())
+    }
+
+    /// Return a per-consumer slice early. Optional; the issuance validity is
+    /// the backstop, so a no-op (or `UNIMPLEMENTED`) is fine.
+    async fn release_access_credentials(
+        &self,
+        _impl_id: &str,
+        _instance_data: &[u8],
+        _handle: &[u8],
+    ) -> Result<()> {
+        Ok(())
+    }
 }

@@ -11,6 +11,7 @@ use async_trait::async_trait;
 use futures::{FutureExt, select};
 use tracing::{error, warn};
 
+use crate::credentials::CredentialStore;
 use crate::model::settings::Settings;
 use crate::plugin::FixtureFactory;
 use crate::store::Store;
@@ -47,12 +48,13 @@ impl FixtureAllocator {
     pub fn new(
         store: Arc<dyn Store>,
         factory: Arc<dyn FixtureFactory>,
+        credentials: Arc<CredentialStore>,
         settings: Settings,
     ) -> Self {
         let now = SystemTime::now as fn() -> SystemTime;
         let alloc = settings.allocator.clone();
         FixtureAllocator {
-            creator: Creator::new(store.clone(), factory.clone(), settings, now),
+            creator: Creator::new(store.clone(), factory.clone(), credentials, settings, now),
             poller: Poller::new(store.clone(), factory.clone(), now),
             cleaner: Cleaner::new(store, factory, now, alloc.lease_timeout()),
             creator_interval: alloc.creator_interval(),
@@ -146,20 +148,31 @@ mod tests {
             cpu_mili: 10,
             memory_bytes: 1024,
         }));
+        let credentials = Arc::new(crate::credentials::CredentialStore::new());
         let settings = Settings::default_local();
         let now = || UNIX_EPOCH + Duration::from_secs(10);
 
-        let creator = Creator::new(store.clone(), factory.clone(), settings, now);
+        let creator = Creator::new(
+            store.clone(),
+            factory.clone(),
+            credentials.clone(),
+            settings,
+            now,
+        );
         let poller = Poller::new(store.clone(), factory.clone(), now);
 
         // Tick 1: creator provisions and assigns; lease -> Creating.
         creator.run_once().await.unwrap();
         // Tick 2: poller flips the fixture Starting -> Running.
         poller.run_once().await.unwrap();
-        // Tick 3: creator advances Creating -> Ready.
+        // Tick 3: creator advances Creating -> Ready and issues credentials.
         creator.run_once().await.unwrap();
 
         let lease = store.lease(&lease_id).await.unwrap().unwrap();
         assert_eq!(lease.fixture_status, LeaseFixtureStatus::Ready);
+        assert!(
+            credentials.contains(&lease_id),
+            "credentials should be issued once the lease is ready"
+        );
     }
 }
