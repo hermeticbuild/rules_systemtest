@@ -4,7 +4,7 @@
 use std::path::Path;
 use std::time::Duration;
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result};
 use hyper_util::rt::TokioIo;
 use tokio::net::UnixStream;
 use tokio::process::{Child, Command};
@@ -13,8 +13,8 @@ use tonic::transport::{Channel, Endpoint, Uri};
 use tower::service_fn;
 
 use systemtest_proto::systemtest::v1::{
-    CreateProgressStatus, CreateRequest, DescribeResponses, Empty, FixtureResult,
-    coordinator_plugin_client::CoordinatorPluginClient,
+    CreateRequest, CreateResponse, DescribeResponses, Empty, GetFixtureInfoRequest,
+    GetFixtureInfoResponse, coordinator_plugin_client::CoordinatorPluginClient,
 };
 
 /// A plugin process the coordinator spawned, plus a connected client.
@@ -103,32 +103,19 @@ pub async fn describe(client: &mut CoordinatorPluginClient<Channel>) -> Result<D
     Ok(client.describe_plugin(Empty {}).await?.into_inner())
 }
 
-/// Calls `CreateFixture` and drains the `CreateProgress` stream to its
-/// terminal message, returning the `FixtureResult` on
-/// `CREATE_PROGRESS_SUCCEEDED` or an error on `CREATE_PROGRESS_ERROR`.
+/// Calls the unary `CreateFixture`, returning as soon as creation is
+/// initiated. Readiness is driven by the reconciler via `get_fixture_info`.
 pub async fn create_fixture(
     client: &mut CoordinatorPluginClient<Channel>,
     request: CreateRequest,
-) -> Result<FixtureResult> {
-    let mut stream = client.create_fixture(request).await?.into_inner();
-    while let Some(progress) = stream.message().await? {
-        match progress.status() {
-            CreateProgressStatus::CreateProgressSucceeded => {
-                return progress
-                    .result
-                    .ok_or_else(|| anyhow!("CREATE_PROGRESS_SUCCEEDED with no result"));
-            }
-            CreateProgressStatus::CreateProgressError => {
-                return Err(anyhow!(
-                    "plugin CreateFixture failed: {:?}",
-                    progress.element_infos
-                ));
-            }
-            // ENQUEUED/CREATING/RUNNING/UNKNOWN: not terminal, keep draining.
-            _ => continue,
-        }
-    }
-    Err(anyhow!(
-        "plugin closed CreateFixture stream without a terminal message"
-    ))
+) -> Result<CreateResponse> {
+    Ok(client.create_fixture(request).await?.into_inner())
+}
+
+/// Calls `GetFixtureInfo` to re-derive a fixture's status and outputs.
+pub async fn get_fixture_info(
+    client: &mut CoordinatorPluginClient<Channel>,
+    request: GetFixtureInfoRequest,
+) -> Result<GetFixtureInfoResponse> {
+    Ok(client.get_fixture_info(request).await?.into_inner())
 }

@@ -73,114 +73,62 @@ func (LeaseStatus) EnumDescriptor() ([]byte, []int) {
 	return file_proto_systemtest_proto_rawDescGZIP(), []int{0}
 }
 
-type CreateProgressStatus int32
+type InstanceStatus int32
 
 const (
-	CreateProgressStatus_CREATE_PROGRESS_UNKNOWN   CreateProgressStatus = 0
-	CreateProgressStatus_CREATE_PROGRESS_ENQUEUED  CreateProgressStatus = 1
-	CreateProgressStatus_CREATE_PROGRESS_CREATING  CreateProgressStatus = 2
-	CreateProgressStatus_CREATE_PROGRESS_RUNNING   CreateProgressStatus = 3
-	CreateProgressStatus_CREATE_PROGRESS_SUCCEEDED CreateProgressStatus = 4
-	CreateProgressStatus_CREATE_PROGRESS_ERROR     CreateProgressStatus = 5
+	InstanceStatus_INSTANCE_STATUS_UNKNOWN InstanceStatus = 0
+	InstanceStatus_INSTANCE_STARTING       InstanceStatus = 1
+	InstanceStatus_INSTANCE_RUNNING        InstanceStatus = 2
+	InstanceStatus_INSTANCE_SHUTTING_DOWN  InstanceStatus = 3
+	InstanceStatus_INSTANCE_ERROR          InstanceStatus = 4
+	InstanceStatus_INSTANCE_DEFUNCT        InstanceStatus = 5
 )
 
-// Enum value maps for CreateProgressStatus.
+// Enum value maps for InstanceStatus.
 var (
-	CreateProgressStatus_name = map[int32]string{
-		0: "CREATE_PROGRESS_UNKNOWN",
-		1: "CREATE_PROGRESS_ENQUEUED",
-		2: "CREATE_PROGRESS_CREATING",
-		3: "CREATE_PROGRESS_RUNNING",
-		4: "CREATE_PROGRESS_SUCCEEDED",
-		5: "CREATE_PROGRESS_ERROR",
+	InstanceStatus_name = map[int32]string{
+		0: "INSTANCE_STATUS_UNKNOWN",
+		1: "INSTANCE_STARTING",
+		2: "INSTANCE_RUNNING",
+		3: "INSTANCE_SHUTTING_DOWN",
+		4: "INSTANCE_ERROR",
+		5: "INSTANCE_DEFUNCT",
 	}
-	CreateProgressStatus_value = map[string]int32{
-		"CREATE_PROGRESS_UNKNOWN":   0,
-		"CREATE_PROGRESS_ENQUEUED":  1,
-		"CREATE_PROGRESS_CREATING":  2,
-		"CREATE_PROGRESS_RUNNING":   3,
-		"CREATE_PROGRESS_SUCCEEDED": 4,
-		"CREATE_PROGRESS_ERROR":     5,
+	InstanceStatus_value = map[string]int32{
+		"INSTANCE_STATUS_UNKNOWN": 0,
+		"INSTANCE_STARTING":       1,
+		"INSTANCE_RUNNING":        2,
+		"INSTANCE_SHUTTING_DOWN":  3,
+		"INSTANCE_ERROR":          4,
+		"INSTANCE_DEFUNCT":        5,
 	}
 )
 
-func (x CreateProgressStatus) Enum() *CreateProgressStatus {
-	p := new(CreateProgressStatus)
+func (x InstanceStatus) Enum() *InstanceStatus {
+	p := new(InstanceStatus)
 	*p = x
 	return p
 }
 
-func (x CreateProgressStatus) String() string {
+func (x InstanceStatus) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (CreateProgressStatus) Descriptor() protoreflect.EnumDescriptor {
+func (InstanceStatus) Descriptor() protoreflect.EnumDescriptor {
 	return file_proto_systemtest_proto_enumTypes[1].Descriptor()
 }
 
-func (CreateProgressStatus) Type() protoreflect.EnumType {
+func (InstanceStatus) Type() protoreflect.EnumType {
 	return &file_proto_systemtest_proto_enumTypes[1]
 }
 
-func (x CreateProgressStatus) Number() protoreflect.EnumNumber {
+func (x InstanceStatus) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use CreateProgressStatus.Descriptor instead.
-func (CreateProgressStatus) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use InstanceStatus.Descriptor instead.
+func (InstanceStatus) EnumDescriptor() ([]byte, []int) {
 	return file_proto_systemtest_proto_rawDescGZIP(), []int{1}
-}
-
-type FixtureElementStatus int32
-
-const (
-	FixtureElementStatus_FIXTURE_ELEMENT_UNKNOWN  FixtureElementStatus = 0
-	FixtureElementStatus_FIXTURE_ELEMENT_CREATING FixtureElementStatus = 1
-	FixtureElementStatus_FIXTURE_ELEMENT_RUNNING  FixtureElementStatus = 2
-	FixtureElementStatus_FIXTURE_ELEMENT_ERROR    FixtureElementStatus = 3
-)
-
-// Enum value maps for FixtureElementStatus.
-var (
-	FixtureElementStatus_name = map[int32]string{
-		0: "FIXTURE_ELEMENT_UNKNOWN",
-		1: "FIXTURE_ELEMENT_CREATING",
-		2: "FIXTURE_ELEMENT_RUNNING",
-		3: "FIXTURE_ELEMENT_ERROR",
-	}
-	FixtureElementStatus_value = map[string]int32{
-		"FIXTURE_ELEMENT_UNKNOWN":  0,
-		"FIXTURE_ELEMENT_CREATING": 1,
-		"FIXTURE_ELEMENT_RUNNING":  2,
-		"FIXTURE_ELEMENT_ERROR":    3,
-	}
-)
-
-func (x FixtureElementStatus) Enum() *FixtureElementStatus {
-	p := new(FixtureElementStatus)
-	*p = x
-	return p
-}
-
-func (x FixtureElementStatus) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (FixtureElementStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_systemtest_proto_enumTypes[2].Descriptor()
-}
-
-func (FixtureElementStatus) Type() protoreflect.EnumType {
-	return &file_proto_systemtest_proto_enumTypes[2]
-}
-
-func (x FixtureElementStatus) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use FixtureElementStatus.Descriptor instead.
-func (FixtureElementStatus) EnumDescriptor() ([]byte, []int) {
-	return file_proto_systemtest_proto_rawDescGZIP(), []int{2}
 }
 
 type Value struct {
@@ -453,6 +401,7 @@ type FixtureDescription struct {
 	Sharing               *Sharing                    `protobuf:"bytes,7,opt,name=sharing,proto3" json:"sharing,omitempty"`
 	StartupTimeoutSeconds int64                       `protobuf:"varint,8,opt,name=startup_timeout_seconds,json=startupTimeoutSeconds,proto3" json:"startup_timeout_seconds,omitempty"`
 	Name                  string                      `protobuf:"bytes,9,opt,name=name,proto3" json:"name,omitempty"`
+	ProfileId             string                      `protobuf:"bytes,10,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -561,6 +510,13 @@ func (x *FixtureDescription) GetName() string {
 	return ""
 }
 
+func (x *FixtureDescription) GetProfileId() string {
+	if x != nil {
+		return x.ProfileId
+	}
+	return ""
+}
+
 type isFixtureDescription_Plugin interface {
 	isFixtureDescription_Plugin()
 }
@@ -659,6 +615,7 @@ type TakeLeaseResponse struct {
 	LeaseId       string                 `protobuf:"bytes,2,opt,name=lease_id,json=leaseId,proto3" json:"lease_id,omitempty"`
 	Outputs       map[string]*Value      `protobuf:"bytes,3,rep,name=outputs,proto3" json:"outputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Messages      []string               `protobuf:"bytes,4,rep,name=messages,proto3" json:"messages,omitempty"`
+	Credentials   map[string]*Value      `protobuf:"bytes,5,rep,name=credentials,proto3" json:"credentials,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -717,6 +674,13 @@ func (x *TakeLeaseResponse) GetOutputs() map[string]*Value {
 func (x *TakeLeaseResponse) GetMessages() []string {
 	if x != nil {
 		return x.Messages
+	}
+	return nil
+}
+
+func (x *TakeLeaseResponse) GetCredentials() map[string]*Value {
+	if x != nil {
+		return x.Credentials
 	}
 	return nil
 }
@@ -930,6 +894,7 @@ type StatusResponse struct {
 	Status        LeaseStatus            `protobuf:"varint,1,opt,name=status,proto3,enum=systemtest.v1.LeaseStatus" json:"status,omitempty"`
 	Outputs       map[string]*Value      `protobuf:"bytes,2,rep,name=outputs,proto3" json:"outputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Messages      []string               `protobuf:"bytes,3,rep,name=messages,proto3" json:"messages,omitempty"`
+	Credentials   map[string]*Value      `protobuf:"bytes,4,rep,name=credentials,proto3" json:"credentials,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -981,6 +946,13 @@ func (x *StatusResponse) GetOutputs() map[string]*Value {
 func (x *StatusResponse) GetMessages() []string {
 	if x != nil {
 		return x.Messages
+	}
+	return nil
+}
+
+func (x *StatusResponse) GetCredentials() map[string]*Value {
+	if x != nil {
+		return x.Credentials
 	}
 	return nil
 }
@@ -1095,6 +1067,7 @@ type CreationMetadata struct {
 	ClientId      string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	Owner         string                 `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`
 	Labels        map[string]string      `protobuf:"bytes,4,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Attempt       uint32                 `protobuf:"varint,6,opt,name=attempt,proto3" json:"attempt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1157,11 +1130,19 @@ func (x *CreationMetadata) GetLabels() map[string]string {
 	return nil
 }
 
+func (x *CreationMetadata) GetAttempt() uint32 {
+	if x != nil {
+		return x.Attempt
+	}
+	return 0
+}
+
 type CreateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ImplId        string                 `protobuf:"bytes,1,opt,name=impl_id,json=implId,proto3" json:"impl_id,omitempty"`
 	Inputs        map[string]*Value      `protobuf:"bytes,2,rep,name=inputs,proto3" json:"inputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Metadata      *CreationMetadata      `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	ProfileConfig []byte                 `protobuf:"bytes,4,opt,name=profile_config,json=profileConfig,proto3" json:"profile_config,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1217,6 +1198,209 @@ func (x *CreateRequest) GetMetadata() *CreationMetadata {
 	return nil
 }
 
+func (x *CreateRequest) GetProfileConfig() []byte {
+	if x != nil {
+		return x.ProfileConfig
+	}
+	return nil
+}
+
+type CreateResponse struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	InstanceData       []byte                 `protobuf:"bytes,1,opt,name=instance_data,json=instanceData,proto3" json:"instance_data,omitempty"`
+	Outputs            map[string]*Value      `protobuf:"bytes,2,rep,name=outputs,proto3" json:"outputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Consumed           []*ResourcePool        `protobuf:"bytes,3,rep,name=consumed,proto3" json:"consumed,omitempty"`
+	IdleTimeoutSeconds int64                  `protobuf:"varint,4,opt,name=idle_timeout_seconds,json=idleTimeoutSeconds,proto3" json:"idle_timeout_seconds,omitempty"`
+	MaxLifetimeSeconds int64                  `protobuf:"varint,5,opt,name=max_lifetime_seconds,json=maxLifetimeSeconds,proto3" json:"max_lifetime_seconds,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *CreateResponse) Reset() {
+	*x = CreateResponse{}
+	mi := &file_proto_systemtest_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateResponse) ProtoMessage() {}
+
+func (x *CreateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_systemtest_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateResponse.ProtoReflect.Descriptor instead.
+func (*CreateResponse) Descriptor() ([]byte, []int) {
+	return file_proto_systemtest_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *CreateResponse) GetInstanceData() []byte {
+	if x != nil {
+		return x.InstanceData
+	}
+	return nil
+}
+
+func (x *CreateResponse) GetOutputs() map[string]*Value {
+	if x != nil {
+		return x.Outputs
+	}
+	return nil
+}
+
+func (x *CreateResponse) GetConsumed() []*ResourcePool {
+	if x != nil {
+		return x.Consumed
+	}
+	return nil
+}
+
+func (x *CreateResponse) GetIdleTimeoutSeconds() int64 {
+	if x != nil {
+		return x.IdleTimeoutSeconds
+	}
+	return 0
+}
+
+func (x *CreateResponse) GetMaxLifetimeSeconds() int64 {
+	if x != nil {
+		return x.MaxLifetimeSeconds
+	}
+	return 0
+}
+
+type GetFixtureInfoRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ImplId        string                 `protobuf:"bytes,1,opt,name=impl_id,json=implId,proto3" json:"impl_id,omitempty"`
+	InstanceData  []byte                 `protobuf:"bytes,2,opt,name=instance_data,json=instanceData,proto3" json:"instance_data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFixtureInfoRequest) Reset() {
+	*x = GetFixtureInfoRequest{}
+	mi := &file_proto_systemtest_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFixtureInfoRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFixtureInfoRequest) ProtoMessage() {}
+
+func (x *GetFixtureInfoRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_systemtest_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFixtureInfoRequest.ProtoReflect.Descriptor instead.
+func (*GetFixtureInfoRequest) Descriptor() ([]byte, []int) {
+	return file_proto_systemtest_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetFixtureInfoRequest) GetImplId() string {
+	if x != nil {
+		return x.ImplId
+	}
+	return ""
+}
+
+func (x *GetFixtureInfoRequest) GetInstanceData() []byte {
+	if x != nil {
+		return x.InstanceData
+	}
+	return nil
+}
+
+type GetFixtureInfoResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Status        InstanceStatus         `protobuf:"varint,1,opt,name=status,proto3,enum=systemtest.v1.InstanceStatus" json:"status,omitempty"`
+	Outputs       map[string]*Value      `protobuf:"bytes,2,rep,name=outputs,proto3" json:"outputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Messages      []string               `protobuf:"bytes,3,rep,name=messages,proto3" json:"messages,omitempty"`
+	Consumed      []*ResourcePool        `protobuf:"bytes,4,rep,name=consumed,proto3" json:"consumed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFixtureInfoResponse) Reset() {
+	*x = GetFixtureInfoResponse{}
+	mi := &file_proto_systemtest_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFixtureInfoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFixtureInfoResponse) ProtoMessage() {}
+
+func (x *GetFixtureInfoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_systemtest_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFixtureInfoResponse.ProtoReflect.Descriptor instead.
+func (*GetFixtureInfoResponse) Descriptor() ([]byte, []int) {
+	return file_proto_systemtest_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GetFixtureInfoResponse) GetStatus() InstanceStatus {
+	if x != nil {
+		return x.Status
+	}
+	return InstanceStatus_INSTANCE_STATUS_UNKNOWN
+}
+
+func (x *GetFixtureInfoResponse) GetOutputs() map[string]*Value {
+	if x != nil {
+		return x.Outputs
+	}
+	return nil
+}
+
+func (x *GetFixtureInfoResponse) GetMessages() []string {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
+func (x *GetFixtureInfoResponse) GetConsumed() []*ResourcePool {
+	if x != nil {
+		return x.Consumed
+	}
+	return nil
+}
+
 type ResourceAmount struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -1228,7 +1412,7 @@ type ResourceAmount struct {
 
 func (x *ResourceAmount) Reset() {
 	*x = ResourceAmount{}
-	mi := &file_proto_systemtest_proto_msgTypes[16]
+	mi := &file_proto_systemtest_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1240,7 +1424,7 @@ func (x *ResourceAmount) String() string {
 func (*ResourceAmount) ProtoMessage() {}
 
 func (x *ResourceAmount) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_systemtest_proto_msgTypes[16]
+	mi := &file_proto_systemtest_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1253,7 +1437,7 @@ func (x *ResourceAmount) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceAmount.ProtoReflect.Descriptor instead.
 func (*ResourceAmount) Descriptor() ([]byte, []int) {
-	return file_proto_systemtest_proto_rawDescGZIP(), []int{16}
+	return file_proto_systemtest_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ResourceAmount) GetName() string {
@@ -1287,7 +1471,7 @@ type ResourcePool struct {
 
 func (x *ResourcePool) Reset() {
 	*x = ResourcePool{}
-	mi := &file_proto_systemtest_proto_msgTypes[17]
+	mi := &file_proto_systemtest_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1299,7 +1483,7 @@ func (x *ResourcePool) String() string {
 func (*ResourcePool) ProtoMessage() {}
 
 func (x *ResourcePool) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_systemtest_proto_msgTypes[17]
+	mi := &file_proto_systemtest_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1312,7 +1496,7 @@ func (x *ResourcePool) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourcePool.ProtoReflect.Descriptor instead.
 func (*ResourcePool) Descriptor() ([]byte, []int) {
-	return file_proto_systemtest_proto_rawDescGZIP(), []int{17}
+	return file_proto_systemtest_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ResourcePool) GetPoolId() string {
@@ -1338,7 +1522,7 @@ type ResourceRequests struct {
 
 func (x *ResourceRequests) Reset() {
 	*x = ResourceRequests{}
-	mi := &file_proto_systemtest_proto_msgTypes[18]
+	mi := &file_proto_systemtest_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1350,7 +1534,7 @@ func (x *ResourceRequests) String() string {
 func (*ResourceRequests) ProtoMessage() {}
 
 func (x *ResourceRequests) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_systemtest_proto_msgTypes[18]
+	mi := &file_proto_systemtest_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1363,200 +1547,12 @@ func (x *ResourceRequests) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResourceRequests.ProtoReflect.Descriptor instead.
 func (*ResourceRequests) Descriptor() ([]byte, []int) {
-	return file_proto_systemtest_proto_rawDescGZIP(), []int{18}
+	return file_proto_systemtest_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ResourceRequests) GetConsumes() []*ResourcePool {
 	if x != nil {
 		return x.Consumes
-	}
-	return nil
-}
-
-type FixtureElementStatusInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ElementName   string                 `protobuf:"bytes,1,opt,name=element_name,json=elementName,proto3" json:"element_name,omitempty"`
-	Status        FixtureElementStatus   `protobuf:"varint,2,opt,name=status,proto3,enum=systemtest.v1.FixtureElementStatus" json:"status,omitempty"`
-	Messages      []string               `protobuf:"bytes,3,rep,name=messages,proto3" json:"messages,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *FixtureElementStatusInfo) Reset() {
-	*x = FixtureElementStatusInfo{}
-	mi := &file_proto_systemtest_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FixtureElementStatusInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FixtureElementStatusInfo) ProtoMessage() {}
-
-func (x *FixtureElementStatusInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_systemtest_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FixtureElementStatusInfo.ProtoReflect.Descriptor instead.
-func (*FixtureElementStatusInfo) Descriptor() ([]byte, []int) {
-	return file_proto_systemtest_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *FixtureElementStatusInfo) GetElementName() string {
-	if x != nil {
-		return x.ElementName
-	}
-	return ""
-}
-
-func (x *FixtureElementStatusInfo) GetStatus() FixtureElementStatus {
-	if x != nil {
-		return x.Status
-	}
-	return FixtureElementStatus_FIXTURE_ELEMENT_UNKNOWN
-}
-
-func (x *FixtureElementStatusInfo) GetMessages() []string {
-	if x != nil {
-		return x.Messages
-	}
-	return nil
-}
-
-type CreateProgress struct {
-	state         protoimpl.MessageState      `protogen:"open.v1"`
-	Status        CreateProgressStatus        `protobuf:"varint,1,opt,name=status,proto3,enum=systemtest.v1.CreateProgressStatus" json:"status,omitempty"`
-	ElementInfos  []*FixtureElementStatusInfo `protobuf:"bytes,2,rep,name=element_infos,json=elementInfos,proto3" json:"element_infos,omitempty"`
-	Result        *FixtureResult              `protobuf:"bytes,3,opt,name=result,proto3,oneof" json:"result,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateProgress) Reset() {
-	*x = CreateProgress{}
-	mi := &file_proto_systemtest_proto_msgTypes[20]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateProgress) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateProgress) ProtoMessage() {}
-
-func (x *CreateProgress) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_systemtest_proto_msgTypes[20]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateProgress.ProtoReflect.Descriptor instead.
-func (*CreateProgress) Descriptor() ([]byte, []int) {
-	return file_proto_systemtest_proto_rawDescGZIP(), []int{20}
-}
-
-func (x *CreateProgress) GetStatus() CreateProgressStatus {
-	if x != nil {
-		return x.Status
-	}
-	return CreateProgressStatus_CREATE_PROGRESS_UNKNOWN
-}
-
-func (x *CreateProgress) GetElementInfos() []*FixtureElementStatusInfo {
-	if x != nil {
-		return x.ElementInfos
-	}
-	return nil
-}
-
-func (x *CreateProgress) GetResult() *FixtureResult {
-	if x != nil {
-		return x.Result
-	}
-	return nil
-}
-
-type FixtureResult struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	Outputs            map[string]*Value      `protobuf:"bytes,1,rep,name=outputs,proto3" json:"outputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	IdleTimeoutSeconds int64                  `protobuf:"varint,2,opt,name=idle_timeout_seconds,json=idleTimeoutSeconds,proto3" json:"idle_timeout_seconds,omitempty"`
-	InstanceData       []byte                 `protobuf:"bytes,3,opt,name=instance_data,json=instanceData,proto3" json:"instance_data,omitempty"`
-	Consumed           []*ResourcePool        `protobuf:"bytes,4,rep,name=consumed,proto3" json:"consumed,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
-}
-
-func (x *FixtureResult) Reset() {
-	*x = FixtureResult{}
-	mi := &file_proto_systemtest_proto_msgTypes[21]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *FixtureResult) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*FixtureResult) ProtoMessage() {}
-
-func (x *FixtureResult) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_systemtest_proto_msgTypes[21]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use FixtureResult.ProtoReflect.Descriptor instead.
-func (*FixtureResult) Descriptor() ([]byte, []int) {
-	return file_proto_systemtest_proto_rawDescGZIP(), []int{21}
-}
-
-func (x *FixtureResult) GetOutputs() map[string]*Value {
-	if x != nil {
-		return x.Outputs
-	}
-	return nil
-}
-
-func (x *FixtureResult) GetIdleTimeoutSeconds() int64 {
-	if x != nil {
-		return x.IdleTimeoutSeconds
-	}
-	return 0
-}
-
-func (x *FixtureResult) GetInstanceData() []byte {
-	if x != nil {
-		return x.InstanceData
-	}
-	return nil
-}
-
-func (x *FixtureResult) GetConsumed() []*ResourcePool {
-	if x != nil {
-		return x.Consumed
 	}
 	return nil
 }
@@ -1649,28 +1645,29 @@ func (*DestroyResponse) Descriptor() ([]byte, []int) {
 	return file_proto_systemtest_proto_rawDescGZIP(), []int{23}
 }
 
-type HealthCheckRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ImplId        string                 `protobuf:"bytes,1,opt,name=impl_id,json=implId,proto3" json:"impl_id,omitempty"`
-	InstanceData  []byte                 `protobuf:"bytes,2,opt,name=instance_data,json=instanceData,proto3" json:"instance_data,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+type IssueAccessCredentialsRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ImplId          string                 `protobuf:"bytes,1,opt,name=impl_id,json=implId,proto3" json:"impl_id,omitempty"`
+	InstanceData    []byte                 `protobuf:"bytes,2,opt,name=instance_data,json=instanceData,proto3" json:"instance_data,omitempty"`
+	ValiditySeconds int64                  `protobuf:"varint,4,opt,name=validity_seconds,json=validitySeconds,proto3" json:"validity_seconds,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
-func (x *HealthCheckRequest) Reset() {
-	*x = HealthCheckRequest{}
+func (x *IssueAccessCredentialsRequest) Reset() {
+	*x = IssueAccessCredentialsRequest{}
 	mi := &file_proto_systemtest_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *HealthCheckRequest) String() string {
+func (x *IssueAccessCredentialsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*HealthCheckRequest) ProtoMessage() {}
+func (*IssueAccessCredentialsRequest) ProtoMessage() {}
 
-func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
+func (x *IssueAccessCredentialsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_systemtest_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1682,47 +1679,54 @@ func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
-func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use IssueAccessCredentialsRequest.ProtoReflect.Descriptor instead.
+func (*IssueAccessCredentialsRequest) Descriptor() ([]byte, []int) {
 	return file_proto_systemtest_proto_rawDescGZIP(), []int{24}
 }
 
-func (x *HealthCheckRequest) GetImplId() string {
+func (x *IssueAccessCredentialsRequest) GetImplId() string {
 	if x != nil {
 		return x.ImplId
 	}
 	return ""
 }
 
-func (x *HealthCheckRequest) GetInstanceData() []byte {
+func (x *IssueAccessCredentialsRequest) GetInstanceData() []byte {
 	if x != nil {
 		return x.InstanceData
 	}
 	return nil
 }
 
-type HealthCheckResponse struct {
+func (x *IssueAccessCredentialsRequest) GetValiditySeconds() int64 {
+	if x != nil {
+		return x.ValiditySeconds
+	}
+	return 0
+}
+
+type IssueAccessCredentialsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Healthy       bool                   `protobuf:"varint,1,opt,name=healthy,proto3" json:"healthy,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Credentials   map[string]*Value      `protobuf:"bytes,1,rep,name=credentials,proto3" json:"credentials,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	IssuedHandle  []byte                 `protobuf:"bytes,2,opt,name=issued_handle,json=issuedHandle,proto3" json:"issued_handle,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *HealthCheckResponse) Reset() {
-	*x = HealthCheckResponse{}
+func (x *IssueAccessCredentialsResponse) Reset() {
+	*x = IssueAccessCredentialsResponse{}
 	mi := &file_proto_systemtest_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *HealthCheckResponse) String() string {
+func (x *IssueAccessCredentialsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*HealthCheckResponse) ProtoMessage() {}
+func (*IssueAccessCredentialsResponse) ProtoMessage() {}
 
-func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
+func (x *IssueAccessCredentialsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_systemtest_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1734,23 +1738,83 @@ func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
-func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use IssueAccessCredentialsResponse.ProtoReflect.Descriptor instead.
+func (*IssueAccessCredentialsResponse) Descriptor() ([]byte, []int) {
 	return file_proto_systemtest_proto_rawDescGZIP(), []int{25}
 }
 
-func (x *HealthCheckResponse) GetHealthy() bool {
+func (x *IssueAccessCredentialsResponse) GetCredentials() map[string]*Value {
 	if x != nil {
-		return x.Healthy
+		return x.Credentials
 	}
-	return false
+	return nil
 }
 
-func (x *HealthCheckResponse) GetMessage() string {
+func (x *IssueAccessCredentialsResponse) GetIssuedHandle() []byte {
 	if x != nil {
-		return x.Message
+		return x.IssuedHandle
+	}
+	return nil
+}
+
+type ReleaseAccessCredentialsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ImplId        string                 `protobuf:"bytes,1,opt,name=impl_id,json=implId,proto3" json:"impl_id,omitempty"`
+	InstanceData  []byte                 `protobuf:"bytes,2,opt,name=instance_data,json=instanceData,proto3" json:"instance_data,omitempty"`
+	IssuedHandle  []byte                 `protobuf:"bytes,3,opt,name=issued_handle,json=issuedHandle,proto3" json:"issued_handle,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReleaseAccessCredentialsRequest) Reset() {
+	*x = ReleaseAccessCredentialsRequest{}
+	mi := &file_proto_systemtest_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReleaseAccessCredentialsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleaseAccessCredentialsRequest) ProtoMessage() {}
+
+func (x *ReleaseAccessCredentialsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_systemtest_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleaseAccessCredentialsRequest.ProtoReflect.Descriptor instead.
+func (*ReleaseAccessCredentialsRequest) Descriptor() ([]byte, []int) {
+	return file_proto_systemtest_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ReleaseAccessCredentialsRequest) GetImplId() string {
+	if x != nil {
+		return x.ImplId
 	}
 	return ""
+}
+
+func (x *ReleaseAccessCredentialsRequest) GetInstanceData() []byte {
+	if x != nil {
+		return x.InstanceData
+	}
+	return nil
+}
+
+func (x *ReleaseAccessCredentialsRequest) GetIssuedHandle() []byte {
+	if x != nil {
+		return x.IssuedHandle
+	}
+	return nil
 }
 
 type Value_SchemaBlob struct {
@@ -1763,7 +1827,7 @@ type Value_SchemaBlob struct {
 
 func (x *Value_SchemaBlob) Reset() {
 	*x = Value_SchemaBlob{}
-	mi := &file_proto_systemtest_proto_msgTypes[26]
+	mi := &file_proto_systemtest_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1775,7 +1839,7 @@ func (x *Value_SchemaBlob) String() string {
 func (*Value_SchemaBlob) ProtoMessage() {}
 
 func (x *Value_SchemaBlob) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_systemtest_proto_msgTypes[26]
+	mi := &file_proto_systemtest_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1828,7 +1892,7 @@ const file_proto_systemtest_proto_rawDesc = "" +
 	"\n" +
 	"single_use\x18\x03 \x01(\v2\x14.systemtest.v1.EmptyH\x00R\tsingleUse\x12D\n" +
 	"\x1emaximum_concurrent_connections\x18\x04 \x01(\x03R\x1cmaximumConcurrentConnectionsB\v\n" +
-	"\tuse_scope\"\xdb\x03\n" +
+	"\tuse_scope\"\xfa\x03\n" +
 	"\x12FixtureDescription\x12\x17\n" +
 	"\aimpl_id\x18\x01 \x01(\tR\x06implId\x12!\n" +
 	"\vbinary_path\x18\x02 \x01(\tH\x00R\n" +
@@ -1840,7 +1904,10 @@ const file_proto_systemtest_proto_rawDesc = "" +
 	"fileInputs\x120\n" +
 	"\asharing\x18\a \x01(\v2\x16.systemtest.v1.SharingR\asharing\x126\n" +
 	"\x17startup_timeout_seconds\x18\b \x01(\x03R\x15startupTimeoutSeconds\x12\x12\n" +
-	"\x04name\x18\t \x01(\tR\x04name\x1aO\n" +
+	"\x04name\x18\t \x01(\tR\x04name\x12\x1d\n" +
+	"\n" +
+	"profile_id\x18\n" +
+	" \x01(\tR\tprofileId\x1aO\n" +
 	"\vInputsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
 	"\x05value\x18\x02 \x01(\v2\x14.systemtest.v1.ValueR\x05value:\x028\x01B\b\n" +
@@ -1851,13 +1918,17 @@ const file_proto_systemtest_proto_rawDesc = "" +
 	"\x05owner\x18\x03 \x01(\tR\x05owner\x12\x1f\n" +
 	"\vttl_seconds\x18\x04 \x01(\x03R\n" +
 	"ttlSeconds\x124\n" +
-	"\x16associated_tests_count\x18\x05 \x01(\rR\x14associatedTestsCount\"\x99\x02\n" +
+	"\x16associated_tests_count\x18\x05 \x01(\rR\x14associatedTestsCount\"\xc4\x03\n" +
 	"\x11TakeLeaseResponse\x122\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x1a.systemtest.v1.LeaseStatusR\x06status\x12\x19\n" +
 	"\blease_id\x18\x02 \x01(\tR\aleaseId\x12G\n" +
 	"\aoutputs\x18\x03 \x03(\v2-.systemtest.v1.TakeLeaseResponse.OutputsEntryR\aoutputs\x12\x1a\n" +
-	"\bmessages\x18\x04 \x03(\tR\bmessages\x1aP\n" +
+	"\bmessages\x18\x04 \x03(\tR\bmessages\x12S\n" +
+	"\vcredentials\x18\x05 \x03(\v21.systemtest.v1.TakeLeaseResponse.CredentialsEntryR\vcredentials\x1aP\n" +
 	"\fOutputsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
+	"\x05value\x18\x02 \x01(\v2\x14.systemtest.v1.ValueR\x05value:\x028\x01\x1aT\n" +
+	"\x10CredentialsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
 	"\x05value\x18\x02 \x01(\v2\x14.systemtest.v1.ValueR\x05value:\x028\x01\"-\n" +
 	"\x10KeepaliveRequest\x12\x19\n" +
@@ -1867,12 +1938,16 @@ const file_proto_systemtest_proto_rawDesc = "" +
 	"\blease_id\x18\x01 \x01(\tR\aleaseId\"\x11\n" +
 	"\x0fReleaseResponse\"*\n" +
 	"\rStatusRequest\x12\x19\n" +
-	"\blease_id\x18\x01 \x01(\tR\aleaseId\"\xf8\x01\n" +
+	"\blease_id\x18\x01 \x01(\tR\aleaseId\"\xa0\x03\n" +
 	"\x0eStatusResponse\x122\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x1a.systemtest.v1.LeaseStatusR\x06status\x12D\n" +
 	"\aoutputs\x18\x02 \x03(\v2*.systemtest.v1.StatusResponse.OutputsEntryR\aoutputs\x12\x1a\n" +
-	"\bmessages\x18\x03 \x03(\tR\bmessages\x1aP\n" +
+	"\bmessages\x18\x03 \x03(\tR\bmessages\x12P\n" +
+	"\vcredentials\x18\x04 \x03(\v2..systemtest.v1.StatusResponse.CredentialsEntryR\vcredentials\x1aP\n" +
 	"\fOutputsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
+	"\x05value\x18\x02 \x01(\v2\x14.systemtest.v1.ValueR\x05value:\x028\x01\x1aT\n" +
+	"\x10CredentialsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
 	"\x05value\x18\x02 \x01(\v2\x14.systemtest.v1.ValueR\x05value:\x028\x01\"R\n" +
 	"\x11DescribeResponses\x12=\n" +
@@ -1883,21 +1958,43 @@ const file_proto_systemtest_proto_rawDesc = "" +
 	"\aschemas\x18\x03 \x03(\v2,.systemtest.v1.DescribeResponse.SchemasEntryR\aschemas\x1a:\n" +
 	"\fSchemasEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe4\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xfe\x01\n" +
 	"\x10CreationMetadata\x12\x1d\n" +
 	"\n" +
 	"fixture_id\x18\x01 \x01(\tR\tfixtureId\x12\x1b\n" +
 	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12\x14\n" +
 	"\x05owner\x18\x03 \x01(\tR\x05owner\x12C\n" +
-	"\x06labels\x18\x04 \x03(\v2+.systemtest.v1.CreationMetadata.LabelsEntryR\x06labels\x1a9\n" +
+	"\x06labels\x18\x04 \x03(\v2+.systemtest.v1.CreationMetadata.LabelsEntryR\x06labels\x12\x18\n" +
+	"\aattempt\x18\x06 \x01(\rR\aattempt\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf8\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9f\x02\n" +
 	"\rCreateRequest\x12\x17\n" +
 	"\aimpl_id\x18\x01 \x01(\tR\x06implId\x12@\n" +
 	"\x06inputs\x18\x02 \x03(\v2(.systemtest.v1.CreateRequest.InputsEntryR\x06inputs\x12;\n" +
-	"\bmetadata\x18\x03 \x01(\v2\x1f.systemtest.v1.CreationMetadataR\bmetadata\x1aO\n" +
+	"\bmetadata\x18\x03 \x01(\v2\x1f.systemtest.v1.CreationMetadataR\bmetadata\x12%\n" +
+	"\x0eprofile_config\x18\x04 \x01(\fR\rprofileConfig\x1aO\n" +
 	"\vInputsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
+	"\x05value\x18\x02 \x01(\v2\x14.systemtest.v1.ValueR\x05value:\x028\x01\"\xea\x02\n" +
+	"\x0eCreateResponse\x12#\n" +
+	"\rinstance_data\x18\x01 \x01(\fR\finstanceData\x12D\n" +
+	"\aoutputs\x18\x02 \x03(\v2*.systemtest.v1.CreateResponse.OutputsEntryR\aoutputs\x127\n" +
+	"\bconsumed\x18\x03 \x03(\v2\x1b.systemtest.v1.ResourcePoolR\bconsumed\x120\n" +
+	"\x14idle_timeout_seconds\x18\x04 \x01(\x03R\x12idleTimeoutSeconds\x120\n" +
+	"\x14max_lifetime_seconds\x18\x05 \x01(\x03R\x12maxLifetimeSeconds\x1aP\n" +
+	"\fOutputsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
+	"\x05value\x18\x02 \x01(\v2\x14.systemtest.v1.ValueR\x05value:\x028\x01\"U\n" +
+	"\x15GetFixtureInfoRequest\x12\x17\n" +
+	"\aimpl_id\x18\x01 \x01(\tR\x06implId\x12#\n" +
+	"\rinstance_data\x18\x02 \x01(\fR\finstanceData\"\xc4\x02\n" +
+	"\x16GetFixtureInfoResponse\x125\n" +
+	"\x06status\x18\x01 \x01(\x0e2\x1d.systemtest.v1.InstanceStatusR\x06status\x12L\n" +
+	"\aoutputs\x18\x02 \x03(\v22.systemtest.v1.GetFixtureInfoResponse.OutputsEntryR\aoutputs\x12\x1a\n" +
+	"\bmessages\x18\x03 \x03(\tR\bmessages\x127\n" +
+	"\bconsumed\x18\x04 \x03(\v2\x1b.systemtest.v1.ResourcePoolR\bconsumed\x1aP\n" +
+	"\fOutputsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
 	"\x05value\x18\x02 \x01(\v2\x14.systemtest.v1.ValueR\x05value:\x028\x01\"T\n" +
 	"\x0eResourceAmount\x12\x12\n" +
@@ -1908,64 +2005,52 @@ const file_proto_systemtest_proto_rawDesc = "" +
 	"\apool_id\x18\x01 \x01(\tR\x06poolId\x12;\n" +
 	"\tresources\x18\x02 \x03(\v2\x1d.systemtest.v1.ResourceAmountR\tresources\"K\n" +
 	"\x10ResourceRequests\x127\n" +
-	"\bconsumes\x18\x01 \x03(\v2\x1b.systemtest.v1.ResourcePoolR\bconsumes\"\x96\x01\n" +
-	"\x18FixtureElementStatusInfo\x12!\n" +
-	"\felement_name\x18\x01 \x01(\tR\velementName\x12;\n" +
-	"\x06status\x18\x02 \x01(\x0e2#.systemtest.v1.FixtureElementStatusR\x06status\x12\x1a\n" +
-	"\bmessages\x18\x03 \x03(\tR\bmessages\"\xe1\x01\n" +
-	"\x0eCreateProgress\x12;\n" +
-	"\x06status\x18\x01 \x01(\x0e2#.systemtest.v1.CreateProgressStatusR\x06status\x12L\n" +
-	"\relement_infos\x18\x02 \x03(\v2'.systemtest.v1.FixtureElementStatusInfoR\felementInfos\x129\n" +
-	"\x06result\x18\x03 \x01(\v2\x1c.systemtest.v1.FixtureResultH\x00R\x06result\x88\x01\x01B\t\n" +
-	"\a_result\"\xb6\x02\n" +
-	"\rFixtureResult\x12C\n" +
-	"\aoutputs\x18\x01 \x03(\v2).systemtest.v1.FixtureResult.OutputsEntryR\aoutputs\x120\n" +
-	"\x14idle_timeout_seconds\x18\x02 \x01(\x03R\x12idleTimeoutSeconds\x12#\n" +
-	"\rinstance_data\x18\x03 \x01(\fR\finstanceData\x127\n" +
-	"\bconsumed\x18\x04 \x03(\v2\x1b.systemtest.v1.ResourcePoolR\bconsumed\x1aP\n" +
-	"\fOutputsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
-	"\x05value\x18\x02 \x01(\v2\x14.systemtest.v1.ValueR\x05value:\x028\x01\"N\n" +
+	"\bconsumes\x18\x01 \x03(\v2\x1b.systemtest.v1.ResourcePoolR\bconsumes\"N\n" +
 	"\x0eDestroyRequest\x12\x17\n" +
 	"\aimpl_id\x18\x01 \x01(\tR\x06implId\x12#\n" +
 	"\rinstance_data\x18\x02 \x01(\fR\finstanceData\"\x11\n" +
-	"\x0fDestroyResponse\"R\n" +
-	"\x12HealthCheckRequest\x12\x17\n" +
+	"\x0fDestroyResponse\"\x88\x01\n" +
+	"\x1dIssueAccessCredentialsRequest\x12\x17\n" +
 	"\aimpl_id\x18\x01 \x01(\tR\x06implId\x12#\n" +
-	"\rinstance_data\x18\x02 \x01(\fR\finstanceData\"I\n" +
-	"\x13HealthCheckResponse\x12\x18\n" +
-	"\ahealthy\x18\x01 \x01(\bR\ahealthy\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage*O\n" +
+	"\rinstance_data\x18\x02 \x01(\fR\finstanceData\x12)\n" +
+	"\x10validity_seconds\x18\x04 \x01(\x03R\x0fvaliditySeconds\"\xfd\x01\n" +
+	"\x1eIssueAccessCredentialsResponse\x12`\n" +
+	"\vcredentials\x18\x01 \x03(\v2>.systemtest.v1.IssueAccessCredentialsResponse.CredentialsEntryR\vcredentials\x12#\n" +
+	"\rissued_handle\x18\x02 \x01(\fR\fissuedHandle\x1aT\n" +
+	"\x10CredentialsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12*\n" +
+	"\x05value\x18\x02 \x01(\v2\x14.systemtest.v1.ValueR\x05value:\x028\x01\"\x84\x01\n" +
+	"\x1fReleaseAccessCredentialsRequest\x12\x17\n" +
+	"\aimpl_id\x18\x01 \x01(\tR\x06implId\x12#\n" +
+	"\rinstance_data\x18\x02 \x01(\fR\finstanceData\x12#\n" +
+	"\rissued_handle\x18\x03 \x01(\fR\fissuedHandle*O\n" +
 	"\vLeaseStatus\x12\x18\n" +
 	"\x14LEASE_STATUS_UNKNOWN\x10\x00\x12\v\n" +
 	"\aPENDING\x10\x01\x12\r\n" +
 	"\tSUCCEEDED\x10\x02\x12\n" +
 	"\n" +
-	"\x06FAILED\x10\x03*\xc6\x01\n" +
-	"\x14CreateProgressStatus\x12\x1b\n" +
-	"\x17CREATE_PROGRESS_UNKNOWN\x10\x00\x12\x1c\n" +
-	"\x18CREATE_PROGRESS_ENQUEUED\x10\x01\x12\x1c\n" +
-	"\x18CREATE_PROGRESS_CREATING\x10\x02\x12\x1b\n" +
-	"\x17CREATE_PROGRESS_RUNNING\x10\x03\x12\x1d\n" +
-	"\x19CREATE_PROGRESS_SUCCEEDED\x10\x04\x12\x19\n" +
-	"\x15CREATE_PROGRESS_ERROR\x10\x05*\x89\x01\n" +
-	"\x14FixtureElementStatus\x12\x1b\n" +
-	"\x17FIXTURE_ELEMENT_UNKNOWN\x10\x00\x12\x1c\n" +
-	"\x18FIXTURE_ELEMENT_CREATING\x10\x01\x12\x1b\n" +
-	"\x17FIXTURE_ELEMENT_RUNNING\x10\x02\x12\x19\n" +
-	"\x15FIXTURE_ELEMENT_ERROR\x10\x032\xca\x02\n" +
+	"\x06FAILED\x10\x03*\xa0\x01\n" +
+	"\x0eInstanceStatus\x12\x1b\n" +
+	"\x17INSTANCE_STATUS_UNKNOWN\x10\x00\x12\x15\n" +
+	"\x11INSTANCE_STARTING\x10\x01\x12\x14\n" +
+	"\x10INSTANCE_RUNNING\x10\x02\x12\x1a\n" +
+	"\x16INSTANCE_SHUTTING_DOWN\x10\x03\x12\x12\n" +
+	"\x0eINSTANCE_ERROR\x10\x04\x12\x14\n" +
+	"\x10INSTANCE_DEFUNCT\x10\x052\xca\x02\n" +
 	"\x12CoordinatorService\x12N\n" +
 	"\tTakeLease\x12\x1f.systemtest.v1.TakeLeaseRequest\x1a .systemtest.v1.TakeLeaseResponse\x12N\n" +
 	"\tKeepalive\x12\x1f.systemtest.v1.KeepaliveRequest\x1a .systemtest.v1.KeepaliveResponse\x12M\n" +
 	"\fReleaseLease\x12\x1d.systemtest.v1.ReleaseRequest\x1a\x1e.systemtest.v1.ReleaseResponse\x12E\n" +
-	"\x06Status\x12\x1c.systemtest.v1.StatusRequest\x1a\x1d.systemtest.v1.StatusResponse2\xf8\x03\n" +
+	"\x06Status\x12\x1c.systemtest.v1.StatusRequest\x1a\x1d.systemtest.v1.StatusResponse2\xd8\x05\n" +
 	"\x11CoordinatorPlugin\x12H\n" +
 	"\x0eDescribePlugin\x12\x14.systemtest.v1.Empty\x1a .systemtest.v1.DescribeResponses\x12L\n" +
 	"\x0fGetResourcePool\x12\x1c.systemtest.v1.CreateRequest\x1a\x1b.systemtest.v1.ResourcePool\x12T\n" +
-	"\x13GetResourceRequests\x12\x1c.systemtest.v1.CreateRequest\x1a\x1f.systemtest.v1.ResourceRequests\x12N\n" +
-	"\rCreateFixture\x12\x1c.systemtest.v1.CreateRequest\x1a\x1d.systemtest.v1.CreateProgress0\x01\x12O\n" +
-	"\x0eDestroyFixture\x12\x1d.systemtest.v1.DestroyRequest\x1a\x1e.systemtest.v1.DestroyResponse\x12T\n" +
-	"\vHealthCheck\x12!.systemtest.v1.HealthCheckRequest\x1a\".systemtest.v1.HealthCheckResponseBBZ@github.com/hermeticbuild/rules_systemtest/src/proto/systemtestpbb\x06proto3"
+	"\x13GetResourceRequests\x12\x1c.systemtest.v1.CreateRequest\x1a\x1f.systemtest.v1.ResourceRequests\x12L\n" +
+	"\rCreateFixture\x12\x1c.systemtest.v1.CreateRequest\x1a\x1d.systemtest.v1.CreateResponse\x12]\n" +
+	"\x0eGetFixtureInfo\x12$.systemtest.v1.GetFixtureInfoRequest\x1a%.systemtest.v1.GetFixtureInfoResponse\x12O\n" +
+	"\x0eDestroyFixture\x12\x1d.systemtest.v1.DestroyRequest\x1a\x1e.systemtest.v1.DestroyResponse\x12u\n" +
+	"\x16IssueAccessCredentials\x12,.systemtest.v1.IssueAccessCredentialsRequest\x1a-.systemtest.v1.IssueAccessCredentialsResponse\x12`\n" +
+	"\x18ReleaseAccessCredentials\x12..systemtest.v1.ReleaseAccessCredentialsRequest\x1a\x14.systemtest.v1.EmptyBBZ@github.com/hermeticbuild/rules_systemtest/src/proto/systemtestpbb\x06proto3"
 
 var (
 	file_proto_systemtest_proto_rawDescOnce sync.Once
@@ -1979,102 +2064,116 @@ func file_proto_systemtest_proto_rawDescGZIP() []byte {
 	return file_proto_systemtest_proto_rawDescData
 }
 
-var file_proto_systemtest_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_proto_systemtest_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
+var file_proto_systemtest_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_proto_systemtest_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_proto_systemtest_proto_goTypes = []any{
-	(LeaseStatus)(0),                 // 0: systemtest.v1.LeaseStatus
-	(CreateProgressStatus)(0),        // 1: systemtest.v1.CreateProgressStatus
-	(FixtureElementStatus)(0),        // 2: systemtest.v1.FixtureElementStatus
-	(*Value)(nil),                    // 3: systemtest.v1.Value
-	(*Empty)(nil),                    // 4: systemtest.v1.Empty
-	(*Sharing)(nil),                  // 5: systemtest.v1.Sharing
-	(*FixtureDescription)(nil),       // 6: systemtest.v1.FixtureDescription
-	(*TakeLeaseRequest)(nil),         // 7: systemtest.v1.TakeLeaseRequest
-	(*TakeLeaseResponse)(nil),        // 8: systemtest.v1.TakeLeaseResponse
-	(*KeepaliveRequest)(nil),         // 9: systemtest.v1.KeepaliveRequest
-	(*KeepaliveResponse)(nil),        // 10: systemtest.v1.KeepaliveResponse
-	(*ReleaseRequest)(nil),           // 11: systemtest.v1.ReleaseRequest
-	(*ReleaseResponse)(nil),          // 12: systemtest.v1.ReleaseResponse
-	(*StatusRequest)(nil),            // 13: systemtest.v1.StatusRequest
-	(*StatusResponse)(nil),           // 14: systemtest.v1.StatusResponse
-	(*DescribeResponses)(nil),        // 15: systemtest.v1.DescribeResponses
-	(*DescribeResponse)(nil),         // 16: systemtest.v1.DescribeResponse
-	(*CreationMetadata)(nil),         // 17: systemtest.v1.CreationMetadata
-	(*CreateRequest)(nil),            // 18: systemtest.v1.CreateRequest
-	(*ResourceAmount)(nil),           // 19: systemtest.v1.ResourceAmount
-	(*ResourcePool)(nil),             // 20: systemtest.v1.ResourcePool
-	(*ResourceRequests)(nil),         // 21: systemtest.v1.ResourceRequests
-	(*FixtureElementStatusInfo)(nil), // 22: systemtest.v1.FixtureElementStatusInfo
-	(*CreateProgress)(nil),           // 23: systemtest.v1.CreateProgress
-	(*FixtureResult)(nil),            // 24: systemtest.v1.FixtureResult
-	(*DestroyRequest)(nil),           // 25: systemtest.v1.DestroyRequest
-	(*DestroyResponse)(nil),          // 26: systemtest.v1.DestroyResponse
-	(*HealthCheckRequest)(nil),       // 27: systemtest.v1.HealthCheckRequest
-	(*HealthCheckResponse)(nil),      // 28: systemtest.v1.HealthCheckResponse
-	(*Value_SchemaBlob)(nil),         // 29: systemtest.v1.Value.SchemaBlob
-	nil,                              // 30: systemtest.v1.FixtureDescription.InputsEntry
-	nil,                              // 31: systemtest.v1.TakeLeaseResponse.OutputsEntry
-	nil,                              // 32: systemtest.v1.StatusResponse.OutputsEntry
-	nil,                              // 33: systemtest.v1.DescribeResponse.SchemasEntry
-	nil,                              // 34: systemtest.v1.CreationMetadata.LabelsEntry
-	nil,                              // 35: systemtest.v1.CreateRequest.InputsEntry
-	nil,                              // 36: systemtest.v1.FixtureResult.OutputsEntry
+	(LeaseStatus)(0),                        // 0: systemtest.v1.LeaseStatus
+	(InstanceStatus)(0),                     // 1: systemtest.v1.InstanceStatus
+	(*Value)(nil),                           // 2: systemtest.v1.Value
+	(*Empty)(nil),                           // 3: systemtest.v1.Empty
+	(*Sharing)(nil),                         // 4: systemtest.v1.Sharing
+	(*FixtureDescription)(nil),              // 5: systemtest.v1.FixtureDescription
+	(*TakeLeaseRequest)(nil),                // 6: systemtest.v1.TakeLeaseRequest
+	(*TakeLeaseResponse)(nil),               // 7: systemtest.v1.TakeLeaseResponse
+	(*KeepaliveRequest)(nil),                // 8: systemtest.v1.KeepaliveRequest
+	(*KeepaliveResponse)(nil),               // 9: systemtest.v1.KeepaliveResponse
+	(*ReleaseRequest)(nil),                  // 10: systemtest.v1.ReleaseRequest
+	(*ReleaseResponse)(nil),                 // 11: systemtest.v1.ReleaseResponse
+	(*StatusRequest)(nil),                   // 12: systemtest.v1.StatusRequest
+	(*StatusResponse)(nil),                  // 13: systemtest.v1.StatusResponse
+	(*DescribeResponses)(nil),               // 14: systemtest.v1.DescribeResponses
+	(*DescribeResponse)(nil),                // 15: systemtest.v1.DescribeResponse
+	(*CreationMetadata)(nil),                // 16: systemtest.v1.CreationMetadata
+	(*CreateRequest)(nil),                   // 17: systemtest.v1.CreateRequest
+	(*CreateResponse)(nil),                  // 18: systemtest.v1.CreateResponse
+	(*GetFixtureInfoRequest)(nil),           // 19: systemtest.v1.GetFixtureInfoRequest
+	(*GetFixtureInfoResponse)(nil),          // 20: systemtest.v1.GetFixtureInfoResponse
+	(*ResourceAmount)(nil),                  // 21: systemtest.v1.ResourceAmount
+	(*ResourcePool)(nil),                    // 22: systemtest.v1.ResourcePool
+	(*ResourceRequests)(nil),                // 23: systemtest.v1.ResourceRequests
+	(*DestroyRequest)(nil),                  // 24: systemtest.v1.DestroyRequest
+	(*DestroyResponse)(nil),                 // 25: systemtest.v1.DestroyResponse
+	(*IssueAccessCredentialsRequest)(nil),   // 26: systemtest.v1.IssueAccessCredentialsRequest
+	(*IssueAccessCredentialsResponse)(nil),  // 27: systemtest.v1.IssueAccessCredentialsResponse
+	(*ReleaseAccessCredentialsRequest)(nil), // 28: systemtest.v1.ReleaseAccessCredentialsRequest
+	(*Value_SchemaBlob)(nil),                // 29: systemtest.v1.Value.SchemaBlob
+	nil,                                     // 30: systemtest.v1.FixtureDescription.InputsEntry
+	nil,                                     // 31: systemtest.v1.TakeLeaseResponse.OutputsEntry
+	nil,                                     // 32: systemtest.v1.TakeLeaseResponse.CredentialsEntry
+	nil,                                     // 33: systemtest.v1.StatusResponse.OutputsEntry
+	nil,                                     // 34: systemtest.v1.StatusResponse.CredentialsEntry
+	nil,                                     // 35: systemtest.v1.DescribeResponse.SchemasEntry
+	nil,                                     // 36: systemtest.v1.CreationMetadata.LabelsEntry
+	nil,                                     // 37: systemtest.v1.CreateRequest.InputsEntry
+	nil,                                     // 38: systemtest.v1.CreateResponse.OutputsEntry
+	nil,                                     // 39: systemtest.v1.GetFixtureInfoResponse.OutputsEntry
+	nil,                                     // 40: systemtest.v1.IssueAccessCredentialsResponse.CredentialsEntry
 }
 var file_proto_systemtest_proto_depIdxs = []int32{
 	29, // 0: systemtest.v1.Value.schema_blob:type_name -> systemtest.v1.Value.SchemaBlob
-	4,  // 1: systemtest.v1.Sharing.unrestricted:type_name -> systemtest.v1.Empty
-	4,  // 2: systemtest.v1.Sharing.client_restricted:type_name -> systemtest.v1.Empty
-	4,  // 3: systemtest.v1.Sharing.single_use:type_name -> systemtest.v1.Empty
+	3,  // 1: systemtest.v1.Sharing.unrestricted:type_name -> systemtest.v1.Empty
+	3,  // 2: systemtest.v1.Sharing.client_restricted:type_name -> systemtest.v1.Empty
+	3,  // 3: systemtest.v1.Sharing.single_use:type_name -> systemtest.v1.Empty
 	30, // 4: systemtest.v1.FixtureDescription.inputs:type_name -> systemtest.v1.FixtureDescription.InputsEntry
-	5,  // 5: systemtest.v1.FixtureDescription.sharing:type_name -> systemtest.v1.Sharing
-	6,  // 6: systemtest.v1.TakeLeaseRequest.fixture:type_name -> systemtest.v1.FixtureDescription
+	4,  // 5: systemtest.v1.FixtureDescription.sharing:type_name -> systemtest.v1.Sharing
+	5,  // 6: systemtest.v1.TakeLeaseRequest.fixture:type_name -> systemtest.v1.FixtureDescription
 	0,  // 7: systemtest.v1.TakeLeaseResponse.status:type_name -> systemtest.v1.LeaseStatus
 	31, // 8: systemtest.v1.TakeLeaseResponse.outputs:type_name -> systemtest.v1.TakeLeaseResponse.OutputsEntry
-	0,  // 9: systemtest.v1.StatusResponse.status:type_name -> systemtest.v1.LeaseStatus
-	32, // 10: systemtest.v1.StatusResponse.outputs:type_name -> systemtest.v1.StatusResponse.OutputsEntry
-	16, // 11: systemtest.v1.DescribeResponses.responses:type_name -> systemtest.v1.DescribeResponse
-	33, // 12: systemtest.v1.DescribeResponse.schemas:type_name -> systemtest.v1.DescribeResponse.SchemasEntry
-	34, // 13: systemtest.v1.CreationMetadata.labels:type_name -> systemtest.v1.CreationMetadata.LabelsEntry
-	35, // 14: systemtest.v1.CreateRequest.inputs:type_name -> systemtest.v1.CreateRequest.InputsEntry
-	17, // 15: systemtest.v1.CreateRequest.metadata:type_name -> systemtest.v1.CreationMetadata
-	19, // 16: systemtest.v1.ResourcePool.resources:type_name -> systemtest.v1.ResourceAmount
-	20, // 17: systemtest.v1.ResourceRequests.consumes:type_name -> systemtest.v1.ResourcePool
-	2,  // 18: systemtest.v1.FixtureElementStatusInfo.status:type_name -> systemtest.v1.FixtureElementStatus
-	1,  // 19: systemtest.v1.CreateProgress.status:type_name -> systemtest.v1.CreateProgressStatus
-	22, // 20: systemtest.v1.CreateProgress.element_infos:type_name -> systemtest.v1.FixtureElementStatusInfo
-	24, // 21: systemtest.v1.CreateProgress.result:type_name -> systemtest.v1.FixtureResult
-	36, // 22: systemtest.v1.FixtureResult.outputs:type_name -> systemtest.v1.FixtureResult.OutputsEntry
-	20, // 23: systemtest.v1.FixtureResult.consumed:type_name -> systemtest.v1.ResourcePool
-	3,  // 24: systemtest.v1.FixtureDescription.InputsEntry.value:type_name -> systemtest.v1.Value
-	3,  // 25: systemtest.v1.TakeLeaseResponse.OutputsEntry.value:type_name -> systemtest.v1.Value
-	3,  // 26: systemtest.v1.StatusResponse.OutputsEntry.value:type_name -> systemtest.v1.Value
-	3,  // 27: systemtest.v1.CreateRequest.InputsEntry.value:type_name -> systemtest.v1.Value
-	3,  // 28: systemtest.v1.FixtureResult.OutputsEntry.value:type_name -> systemtest.v1.Value
-	7,  // 29: systemtest.v1.CoordinatorService.TakeLease:input_type -> systemtest.v1.TakeLeaseRequest
-	9,  // 30: systemtest.v1.CoordinatorService.Keepalive:input_type -> systemtest.v1.KeepaliveRequest
-	11, // 31: systemtest.v1.CoordinatorService.ReleaseLease:input_type -> systemtest.v1.ReleaseRequest
-	13, // 32: systemtest.v1.CoordinatorService.Status:input_type -> systemtest.v1.StatusRequest
-	4,  // 33: systemtest.v1.CoordinatorPlugin.DescribePlugin:input_type -> systemtest.v1.Empty
-	18, // 34: systemtest.v1.CoordinatorPlugin.GetResourcePool:input_type -> systemtest.v1.CreateRequest
-	18, // 35: systemtest.v1.CoordinatorPlugin.GetResourceRequests:input_type -> systemtest.v1.CreateRequest
-	18, // 36: systemtest.v1.CoordinatorPlugin.CreateFixture:input_type -> systemtest.v1.CreateRequest
-	25, // 37: systemtest.v1.CoordinatorPlugin.DestroyFixture:input_type -> systemtest.v1.DestroyRequest
-	27, // 38: systemtest.v1.CoordinatorPlugin.HealthCheck:input_type -> systemtest.v1.HealthCheckRequest
-	8,  // 39: systemtest.v1.CoordinatorService.TakeLease:output_type -> systemtest.v1.TakeLeaseResponse
-	10, // 40: systemtest.v1.CoordinatorService.Keepalive:output_type -> systemtest.v1.KeepaliveResponse
-	12, // 41: systemtest.v1.CoordinatorService.ReleaseLease:output_type -> systemtest.v1.ReleaseResponse
-	14, // 42: systemtest.v1.CoordinatorService.Status:output_type -> systemtest.v1.StatusResponse
-	15, // 43: systemtest.v1.CoordinatorPlugin.DescribePlugin:output_type -> systemtest.v1.DescribeResponses
-	20, // 44: systemtest.v1.CoordinatorPlugin.GetResourcePool:output_type -> systemtest.v1.ResourcePool
-	21, // 45: systemtest.v1.CoordinatorPlugin.GetResourceRequests:output_type -> systemtest.v1.ResourceRequests
-	23, // 46: systemtest.v1.CoordinatorPlugin.CreateFixture:output_type -> systemtest.v1.CreateProgress
-	26, // 47: systemtest.v1.CoordinatorPlugin.DestroyFixture:output_type -> systemtest.v1.DestroyResponse
-	28, // 48: systemtest.v1.CoordinatorPlugin.HealthCheck:output_type -> systemtest.v1.HealthCheckResponse
-	39, // [39:49] is the sub-list for method output_type
-	29, // [29:39] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	32, // 9: systemtest.v1.TakeLeaseResponse.credentials:type_name -> systemtest.v1.TakeLeaseResponse.CredentialsEntry
+	0,  // 10: systemtest.v1.StatusResponse.status:type_name -> systemtest.v1.LeaseStatus
+	33, // 11: systemtest.v1.StatusResponse.outputs:type_name -> systemtest.v1.StatusResponse.OutputsEntry
+	34, // 12: systemtest.v1.StatusResponse.credentials:type_name -> systemtest.v1.StatusResponse.CredentialsEntry
+	15, // 13: systemtest.v1.DescribeResponses.responses:type_name -> systemtest.v1.DescribeResponse
+	35, // 14: systemtest.v1.DescribeResponse.schemas:type_name -> systemtest.v1.DescribeResponse.SchemasEntry
+	36, // 15: systemtest.v1.CreationMetadata.labels:type_name -> systemtest.v1.CreationMetadata.LabelsEntry
+	37, // 16: systemtest.v1.CreateRequest.inputs:type_name -> systemtest.v1.CreateRequest.InputsEntry
+	16, // 17: systemtest.v1.CreateRequest.metadata:type_name -> systemtest.v1.CreationMetadata
+	38, // 18: systemtest.v1.CreateResponse.outputs:type_name -> systemtest.v1.CreateResponse.OutputsEntry
+	22, // 19: systemtest.v1.CreateResponse.consumed:type_name -> systemtest.v1.ResourcePool
+	1,  // 20: systemtest.v1.GetFixtureInfoResponse.status:type_name -> systemtest.v1.InstanceStatus
+	39, // 21: systemtest.v1.GetFixtureInfoResponse.outputs:type_name -> systemtest.v1.GetFixtureInfoResponse.OutputsEntry
+	22, // 22: systemtest.v1.GetFixtureInfoResponse.consumed:type_name -> systemtest.v1.ResourcePool
+	21, // 23: systemtest.v1.ResourcePool.resources:type_name -> systemtest.v1.ResourceAmount
+	22, // 24: systemtest.v1.ResourceRequests.consumes:type_name -> systemtest.v1.ResourcePool
+	40, // 25: systemtest.v1.IssueAccessCredentialsResponse.credentials:type_name -> systemtest.v1.IssueAccessCredentialsResponse.CredentialsEntry
+	2,  // 26: systemtest.v1.FixtureDescription.InputsEntry.value:type_name -> systemtest.v1.Value
+	2,  // 27: systemtest.v1.TakeLeaseResponse.OutputsEntry.value:type_name -> systemtest.v1.Value
+	2,  // 28: systemtest.v1.TakeLeaseResponse.CredentialsEntry.value:type_name -> systemtest.v1.Value
+	2,  // 29: systemtest.v1.StatusResponse.OutputsEntry.value:type_name -> systemtest.v1.Value
+	2,  // 30: systemtest.v1.StatusResponse.CredentialsEntry.value:type_name -> systemtest.v1.Value
+	2,  // 31: systemtest.v1.CreateRequest.InputsEntry.value:type_name -> systemtest.v1.Value
+	2,  // 32: systemtest.v1.CreateResponse.OutputsEntry.value:type_name -> systemtest.v1.Value
+	2,  // 33: systemtest.v1.GetFixtureInfoResponse.OutputsEntry.value:type_name -> systemtest.v1.Value
+	2,  // 34: systemtest.v1.IssueAccessCredentialsResponse.CredentialsEntry.value:type_name -> systemtest.v1.Value
+	6,  // 35: systemtest.v1.CoordinatorService.TakeLease:input_type -> systemtest.v1.TakeLeaseRequest
+	8,  // 36: systemtest.v1.CoordinatorService.Keepalive:input_type -> systemtest.v1.KeepaliveRequest
+	10, // 37: systemtest.v1.CoordinatorService.ReleaseLease:input_type -> systemtest.v1.ReleaseRequest
+	12, // 38: systemtest.v1.CoordinatorService.Status:input_type -> systemtest.v1.StatusRequest
+	3,  // 39: systemtest.v1.CoordinatorPlugin.DescribePlugin:input_type -> systemtest.v1.Empty
+	17, // 40: systemtest.v1.CoordinatorPlugin.GetResourcePool:input_type -> systemtest.v1.CreateRequest
+	17, // 41: systemtest.v1.CoordinatorPlugin.GetResourceRequests:input_type -> systemtest.v1.CreateRequest
+	17, // 42: systemtest.v1.CoordinatorPlugin.CreateFixture:input_type -> systemtest.v1.CreateRequest
+	19, // 43: systemtest.v1.CoordinatorPlugin.GetFixtureInfo:input_type -> systemtest.v1.GetFixtureInfoRequest
+	24, // 44: systemtest.v1.CoordinatorPlugin.DestroyFixture:input_type -> systemtest.v1.DestroyRequest
+	26, // 45: systemtest.v1.CoordinatorPlugin.IssueAccessCredentials:input_type -> systemtest.v1.IssueAccessCredentialsRequest
+	28, // 46: systemtest.v1.CoordinatorPlugin.ReleaseAccessCredentials:input_type -> systemtest.v1.ReleaseAccessCredentialsRequest
+	7,  // 47: systemtest.v1.CoordinatorService.TakeLease:output_type -> systemtest.v1.TakeLeaseResponse
+	9,  // 48: systemtest.v1.CoordinatorService.Keepalive:output_type -> systemtest.v1.KeepaliveResponse
+	11, // 49: systemtest.v1.CoordinatorService.ReleaseLease:output_type -> systemtest.v1.ReleaseResponse
+	13, // 50: systemtest.v1.CoordinatorService.Status:output_type -> systemtest.v1.StatusResponse
+	14, // 51: systemtest.v1.CoordinatorPlugin.DescribePlugin:output_type -> systemtest.v1.DescribeResponses
+	22, // 52: systemtest.v1.CoordinatorPlugin.GetResourcePool:output_type -> systemtest.v1.ResourcePool
+	23, // 53: systemtest.v1.CoordinatorPlugin.GetResourceRequests:output_type -> systemtest.v1.ResourceRequests
+	18, // 54: systemtest.v1.CoordinatorPlugin.CreateFixture:output_type -> systemtest.v1.CreateResponse
+	20, // 55: systemtest.v1.CoordinatorPlugin.GetFixtureInfo:output_type -> systemtest.v1.GetFixtureInfoResponse
+	25, // 56: systemtest.v1.CoordinatorPlugin.DestroyFixture:output_type -> systemtest.v1.DestroyResponse
+	27, // 57: systemtest.v1.CoordinatorPlugin.IssueAccessCredentials:output_type -> systemtest.v1.IssueAccessCredentialsResponse
+	3,  // 58: systemtest.v1.CoordinatorPlugin.ReleaseAccessCredentials:output_type -> systemtest.v1.Empty
+	47, // [47:59] is the sub-list for method output_type
+	35, // [35:47] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_proto_systemtest_proto_init() }
@@ -2097,14 +2196,13 @@ func file_proto_systemtest_proto_init() {
 		(*FixtureDescription_BinaryPath)(nil),
 		(*FixtureDescription_ContainerRef)(nil),
 	}
-	file_proto_systemtest_proto_msgTypes[20].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_systemtest_proto_rawDesc), len(file_proto_systemtest_proto_rawDesc)),
-			NumEnums:      3,
-			NumMessages:   34,
+			NumEnums:      2,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

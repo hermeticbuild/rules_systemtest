@@ -103,6 +103,7 @@ impl CoordinatorService for Coordinator {
                         lease_id: lease_id.into_string(),
                         outputs,
                         messages: vec!["connecting to existing fixture".to_string()],
+                        credentials: BTreeMap::new(),
                     }));
                 }
             }
@@ -131,7 +132,10 @@ impl CoordinatorService for Coordinator {
                 client_id: req.client_id.clone(),
                 owner: req.owner.clone(),
                 labels: BTreeMap::new(),
+                identity: None,
+                attempt: 0,
             }),
+            profile_config: Vec::new(),
         };
         let result = plugin_client::create_fixture(&mut plugin.client, create_req)
             .await
@@ -164,6 +168,7 @@ impl CoordinatorService for Coordinator {
             lease_id: lease_id.into_string(),
             outputs,
             messages: vec![],
+            credentials: BTreeMap::new(),
         }))
     }
 
@@ -212,6 +217,7 @@ impl CoordinatorService for Coordinator {
             status: LeaseStatus::Succeeded as i32,
             outputs,
             messages: vec![],
+            credentials: BTreeMap::new(),
         }))
     }
 }
