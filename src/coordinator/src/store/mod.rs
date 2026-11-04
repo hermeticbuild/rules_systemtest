@@ -62,8 +62,10 @@ pub trait Store: Send + Sync {
     /// Leases whose keepalive has lapsed or whose age exceeds `max_lifetime`.
     async fn leases_due(&self, now: SystemTime, max_lifetime: Duration) -> Result<Vec<LeaseId>>;
 
-    /// Fixtures past their absolute `expires_at`.
-    async fn fixtures_due(&self, now: SystemTime) -> Result<Vec<FixtureId>>;
+    /// Fixtures past their absolute `expires_at` that are **not** currently
+    /// assigned (a live lease is never destroyed — such a fixture is retired,
+    /// not deleted, until its lease releases).
+    async fn fixtures_due(&self, now: SystemTime) -> Result<Vec<FixtureState>>;
 
     /// Resources charged against a profile's budget (sum of live fixtures).
     async fn budget_usage(&self, profile: &ProfileId) -> Result<Capacity>;

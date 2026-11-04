@@ -163,12 +163,13 @@ impl Store for InMemoryStore {
             .collect())
     }
 
-    async fn fixtures_due(&self, now: SystemTime) -> Result<Vec<FixtureId>> {
+    async fn fixtures_due(&self, now: SystemTime) -> Result<Vec<FixtureState>> {
         let w = self.inner.lock().unwrap();
+        let assigned: HashSet<&FixtureId> = w.assignments.values().flatten().collect();
         Ok(w.fixtures
             .values()
-            .filter(|f| now >= f.expires_at)
-            .map(|f| f.id.clone())
+            .filter(|f| now >= f.expires_at && !assigned.contains(&f.id))
+            .cloned()
             .collect())
     }
 
@@ -287,7 +288,35 @@ mod tests {
         let before = SystemTime::UNIX_EPOCH + Duration::from_secs(5);
         assert!(store.fixtures_due(before).await.unwrap().is_empty());
         let after = SystemTime::UNIX_EPOCH + Duration::from_secs(20);
-        assert_eq!(store.fixtures_due(after).await.unwrap(), vec![fid]);
+        let due = store.fixtures_due(after).await.unwrap();
+        assert_eq!(due.len(), 1);
+        assert_eq!(due[0].id, fid);
+    }
+
+    #[tokio::test]
+    async fn assigned_fixture_is_not_due_even_if_expired() {
+        let store = InMemoryStore::new();
+        let lease = fake_lease();
+        let mut f = fake_fixture();
+        f.expires_at = SystemTime::UNIX_EPOCH + Duration::from_secs(10);
+        let lid = lease.id.clone();
+        let fid = f.id.clone();
+        store
+            .apply(&[
+                Mutation::CreateLease(Box::new(lease)),
+                Mutation::UpsertFixture(Box::new(f)),
+                Mutation::Assign {
+                    lease: lid,
+                    fixture: fid,
+                },
+            ])
+            .await
+            .unwrap();
+        let after = SystemTime::UNIX_EPOCH + Duration::from_secs(20);
+        assert!(
+            store.fixtures_due(after).await.unwrap().is_empty(),
+            "a fixture with a live lease must not be due for deletion"
+        );
     }
 
     #[tokio::test]
