@@ -138,6 +138,7 @@ func (r *Runner) execute(ctx context.Context, args *RunArgs) (int, error) {
 			LeaseID:     al.ID,
 			FixtureName: fx.Name,
 			Outputs:     al.Outputs,
+			Credentials: al.Credentials,
 		})
 	}
 

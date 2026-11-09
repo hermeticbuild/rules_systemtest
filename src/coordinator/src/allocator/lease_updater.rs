@@ -261,7 +261,11 @@ fn advance_creating(
                 FixtureAction::UnassignAll,
             )
         } else {
-            error("fixture failed, retries exceeded")
+            error(failure_message(
+                ws,
+                lease,
+                "fixture failed, retries exceeded",
+            ))
         };
     }
     if statuses
@@ -279,9 +283,36 @@ fn advance_ready(ws: &WorkingSet, lease: &LeaseState) -> Partial {
         .iter()
         .any(|s| *s == pb::InstanceStatus::InstanceError)
     {
-        error("a fixture of a ready lease failed")
+        error(failure_message(
+            ws,
+            lease,
+            "a fixture of a ready lease failed",
+        ))
     } else {
         Partial::None
+    }
+}
+
+/// The lease's failure message: the plugin's high-level summary from the failed
+/// fixture's messages, falling back to `default` if the plugin gave none. The
+/// plugin no longer ships per-pod logs — the client pulls those itself with the
+/// handed-over credentials.
+fn failure_message(ws: &WorkingSet, lease: &LeaseState, default: &str) -> String {
+    let Some(group) = ws.groups.get(&lease.fingerprint) else {
+        return default.to_string();
+    };
+    let assigned = group.assignments.get(&lease.id);
+    let summary: Vec<String> = assigned
+        .into_iter()
+        .flatten()
+        .filter_map(|id| group.fixtures.get(id))
+        .filter(|f| f.status == pb::InstanceStatus::InstanceError)
+        .flat_map(|f| f.messages.clone())
+        .collect();
+    if summary.is_empty() {
+        default.to_string()
+    } else {
+        summary.join("; ")
     }
 }
 

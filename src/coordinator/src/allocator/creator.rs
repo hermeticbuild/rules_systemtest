@@ -1,5 +1,5 @@
-//! Creator task: assigns leases to fixtures, provisions what's missing (with a
-//! persist-before-create saga), and reclaims capacity under pressure.
+//! Creator task: assigns leases to fixtures, provisions what's missing
+//! and reclaims capacity under pressure.
 
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
@@ -23,7 +23,7 @@ use crate::store::{Mutation, Store};
 use systemtest_proto::systemtest::v1 as pb;
 
 /// Validity requested when issuing per-consumer credentials. Must outlast the
-/// lease; the plugin reclaims on lapse (the leak backstop).
+/// lease; the plugin reclaims on lapse.
 const CREDENTIAL_VALIDITY: Duration = Duration::from_secs(3600);
 
 pub struct Creator {
@@ -154,7 +154,13 @@ impl Creator {
             let Some(lease) = leases_by_id.get(&lease_id) else {
                 continue;
             };
-            let became_ready = matches!(decision.status, LeaseFixtureStatus::Ready);
+            // Issue credentials once the fixture's namespace exists — on
+            // readiness (so Status→SUCCEEDED carries them) and also on failure,
+            // so the client can pull logs/status to debug the broken fixture.
+            let became_terminal = matches!(
+                decision.status,
+                LeaseFixtureStatus::Ready | LeaseFixtureStatus::Error { .. }
+            );
             let result = match decision.action {
                 None => {
                     self.store
@@ -199,9 +205,10 @@ impl Creator {
                 error!("advancing lease {}: {e:#}", lease_id.as_str());
                 continue;
             }
-            // Issue per-consumer credentials once, as the lease reaches ready
-            // (immediately before Status will report SUCCEEDED).
-            if became_ready {
+            // Issue per-consumer credentials once, as the lease reaches a
+            // terminal state. issue_credentials_for no-ops when the lease has no
+            // created fixture (e.g. a create-time failure left no namespace).
+            if became_terminal {
                 self.issue_credentials_for(lease).await;
             }
         }
