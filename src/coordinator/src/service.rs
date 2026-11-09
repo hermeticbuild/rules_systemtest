@@ -144,10 +144,13 @@ impl CoordinatorService for Service {
             ),
         };
 
-        let credentials = if status == pb::LeaseStatus::Succeeded {
-            self.credentials.credentials(&id)
-        } else {
-            BTreeMap::new()
+        // Hand credentials to the client on success (to use the fixture) and on
+        // failure (to debug the broken fixture's namespace while its lease lives).
+        let credentials = match status {
+            pb::LeaseStatus::Succeeded | pb::LeaseStatus::Failed => {
+                self.credentials.credentials(&id)
+            }
+            _ => BTreeMap::new(),
         };
 
         Ok(Response::new(pb::StatusResponse {

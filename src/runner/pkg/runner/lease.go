@@ -20,15 +20,30 @@ const defaultStartupTimeout = 5 * time.Minute
 // activeLease is a lease this runner holds, plus the machinery to keep it
 // alive and release it.
 type activeLease struct {
-	ID      string
-	Outputs map[string]*systemtestpb.Value
-	stop    context.CancelFunc
+	ID          string
+	Outputs     map[string]*systemtestpb.Value
+	Credentials map[string]*systemtestpb.Value
+	stop        context.CancelFunc
+}
+
+// fixtureFailedError is returned by acquireLease when a lease reaches FAILED.
+// It carries the coordinator's high-level messages and the fixture's access
+// credentials (if any), so the caller can dump debug info before giving up.
+type fixtureFailedError struct {
+	FixtureName string
+	Status      systemtestpb.LeaseStatus
+	Messages    []string
+	Credentials map[string]*systemtestpb.Value
+}
+
+func (e *fixtureFailedError) Error() string {
+	return fmt.Sprintf("fixture %q: lease %s: %s", e.FixtureName, e.Status, strings.Join(e.Messages, "; "))
 }
 
 // acquireLease calls TakeLease for one fixture, polling Status if the
 // coordinator returns PENDING, and starts a background Keepalive loop once
-// the lease is SUCCEEDED. On FAILED it returns an error containing the
-// coordinator's messages.
+// the lease is SUCCEEDED. On FAILED it returns a *fixtureFailedError carrying
+// the messages and access credentials for debugging.
 func acquireLease(
 	ctx context.Context,
 	client systemtestpb.CoordinatorServiceClient,
@@ -48,7 +63,8 @@ func acquireLease(
 		return nil, fmt.Errorf("fixture %q: TakeLease: %w", fixture.Name, err)
 	}
 
-	status, leaseID, outputs, messages := resp.GetStatus(), resp.GetLeaseId(), resp.GetOutputs(), resp.GetMessages()
+	status, leaseID := resp.GetStatus(), resp.GetLeaseId()
+	outputs, creds, messages := resp.GetOutputs(), resp.GetCredentials(), resp.GetMessages()
 
 	if status == systemtestpb.LeaseStatus_PENDING {
 		if startupTimeout <= 0 {
@@ -56,20 +72,25 @@ func acquireLease(
 		}
 		pollCtx, cancel := context.WithTimeout(ctx, startupTimeout)
 		defer cancel()
-		status, outputs, messages, err = pollUntilDone(pollCtx, client, leaseID)
+		status, outputs, creds, messages, err = pollUntilDone(pollCtx, client, leaseID)
 		if err != nil {
 			return nil, fmt.Errorf("fixture %q: waiting for lease: %w", fixture.Name, err)
 		}
 	}
 
 	if status != systemtestpb.LeaseStatus_SUCCEEDED {
-		return nil, fmt.Errorf("fixture %q: lease %s: %s", fixture.Name, status, strings.Join(messages, "; "))
+		return nil, &fixtureFailedError{
+			FixtureName: fixture.Name,
+			Status:      status,
+			Messages:    messages,
+			Credentials: creds,
+		}
 	}
 
 	leaseCtx, cancel := context.WithCancel(context.Background())
 	go keepaliveLoop(leaseCtx, client, leaseID)
 
-	return &activeLease{ID: leaseID, Outputs: outputs, stop: cancel}, nil
+	return &activeLease{ID: leaseID, Outputs: outputs, Credentials: creds, stop: cancel}, nil
 }
 
 // pollUntilDone polls Status every 2s until the lease reaches a terminal
@@ -78,21 +99,21 @@ func pollUntilDone(
 	ctx context.Context,
 	client systemtestpb.CoordinatorServiceClient,
 	leaseID string,
-) (systemtestpb.LeaseStatus, map[string]*systemtestpb.Value, []string, error) {
+) (systemtestpb.LeaseStatus, map[string]*systemtestpb.Value, map[string]*systemtestpb.Value, []string, error) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
-			return systemtestpb.LeaseStatus_LEASE_STATUS_UNKNOWN, nil, nil, ctx.Err()
+			return systemtestpb.LeaseStatus_LEASE_STATUS_UNKNOWN, nil, nil, nil, ctx.Err()
 		case <-ticker.C:
 			resp, err := client.Status(ctx, &systemtestpb.StatusRequest{LeaseId: leaseID})
 			if err != nil {
-				return systemtestpb.LeaseStatus_LEASE_STATUS_UNKNOWN, nil, nil, fmt.Errorf("Status: %w", err)
+				return systemtestpb.LeaseStatus_LEASE_STATUS_UNKNOWN, nil, nil, nil, fmt.Errorf("Status: %w", err)
 			}
 			switch resp.GetStatus() {
 			case systemtestpb.LeaseStatus_SUCCEEDED, systemtestpb.LeaseStatus_FAILED:
-				return resp.GetStatus(), resp.GetOutputs(), resp.GetMessages(), nil
+				return resp.GetStatus(), resp.GetOutputs(), resp.GetCredentials(), resp.GetMessages(), nil
 			}
 			// PENDING (or UNKNOWN): keep polling.
 		}

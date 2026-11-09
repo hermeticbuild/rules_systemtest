@@ -36,11 +36,14 @@ type HookCtx struct {
 }
 
 // Lease is the resolved fixture a hook operates on. Outputs are schema-tagged
-// Values forwarded verbatim from the plugin.
+// Values forwarded verbatim from the plugin; Credentials are the per-consumer
+// access material, kept separate so secrets are not treated as plain outputs.
+// Hooks select which to consume by schema id.
 type Lease struct {
 	LeaseID     string
 	FixtureName string // the fixture target name; the env-var prefix
 	Outputs     map[string]*Value
+	Credentials map[string]*Value
 }
 
 // TestResult is handed to PostHooks after the inner test exits.
