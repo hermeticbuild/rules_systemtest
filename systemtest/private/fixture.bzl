@@ -99,6 +99,7 @@ def _make_fixture_impl(ctx):
         "sharing": _sharing_json(ctx.attr.sharing),
         "name": ctx.label.name,
         "startupTimeoutSeconds": str(ctx.attr.startup_timeout_s),
+        "profileId": ctx.attr.profile,
     }
 
     out = ctx.actions.declare_file(ctx.label.name + ".fixture.json")
@@ -132,6 +133,10 @@ def systemtest_fixture_rule(impl_id, inputs = {}):
         ),
         "sharing": attr.string_dict(
             doc = "{'scope': ..., 'max_connections': 'N'}. Default client_restricted/1.",
+        ),
+        "profile": attr.string(
+            doc = "Tenancy/budget profile id the coordinator resolves (credentials, " +
+                  "quota, bootstrap policy). Empty = the coordinator's default profile.",
         ),
         "startup_timeout_s": attr.int(default = 300),
         # Private attrs carry the factory's parameters into analysis.
